@@ -1,0 +1,27 @@
+service: house-price-estimator
+
+image: rpazevedo/house-price-estimator
+
+servers:
+  web:
+    - 209.38.93.10
+
+proxy:
+  ssl: true
+  host: houses.kmaster.app
+  app_port: 8501
+  healthcheck:
+    path: /_stcore/health
+
+registry:
+  server: ghcr.io
+  username: rpazevedo
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+
+aliases:
+  logs: app logs -f
+  shell: app exec --interactive --reuse "bash"

@@ -1,0 +1,190 @@
+from __future__ import annotations
+
+from typing import Any
+
+BY_SUBURB_TYPE: dict[tuple[str, str], dict[str, float]] = {
+    ('Campbelltown', 'Apartment'): {
+        "SUBURB_MEAN_PRICE": 550000,
+        "MEAN_PRICE_AREA": 689000,
+        "SUBURB_PRICE_GROWTH": 9.0418,
+        "AVG_RENTAL_PRICE": 550,
+        "RENT_RATE": 4.775,
+        "RENTAL_PRICE_GROWTH": 3.7736,
+        "RENTAL_GROWTH": -2.9,
+        "PROPERTY_SALES_VOLUME": 261,
+        "HISTORICAL_CAPITAL_GROWTH": 32.2838,
+        "AIR_QUALITY": 13.52,
+    },
+    ('Campbelltown', 'House'): {
+        "SUBURB_MEAN_PRICE": 1018500,
+        "MEAN_PRICE_AREA": 1088000,
+        "SUBURB_PRICE_GROWTH": 6.9629,
+        "AVG_RENTAL_PRICE": 620,
+        "RENT_RATE": 3.345,
+        "RENTAL_PRICE_GROWTH": 3.3333,
+        "RENTAL_GROWTH": 4,
+        "PROPERTY_SALES_VOLUME": 209,
+        "HISTORICAL_CAPITAL_GROWTH": 65.221,
+        "AIR_QUALITY": 13.52,
+    },
+    ('Campbelltown', 'Townhouse'): {
+        "SUBURB_MEAN_PRICE": 590000,
+        "MEAN_PRICE_AREA": 689000,
+        "SUBURB_PRICE_GROWTH": 9.0418,
+        "AVG_RENTAL_PRICE": 550,
+        "RENT_RATE": 4.775,
+        "RENTAL_PRICE_GROWTH": 3.7736,
+        "RENTAL_GROWTH": -2.9,
+        "PROPERTY_SALES_VOLUME": 200,
+        "HISTORICAL_CAPITAL_GROWTH": 32.2838,
+        "AIR_QUALITY": 13.52,
+    },
+    ('Campbelltown', 'Unit'): {
+        "SUBURB_MEAN_PRICE": 590000,
+        "MEAN_PRICE_AREA": 689000,
+        "SUBURB_PRICE_GROWTH": 9.0418,
+        "AVG_RENTAL_PRICE": 550,
+        "RENT_RATE": 4.775,
+        "RENTAL_PRICE_GROWTH": 3.7736,
+        "RENTAL_GROWTH": -2.9,
+        "PROPERTY_SALES_VOLUME": 200,
+        "HISTORICAL_CAPITAL_GROWTH": 32.2838,
+        "AIR_QUALITY": 13.52,
+    },
+    ('Mosman', 'Apartment'): {
+        "SUBURB_MEAN_PRICE": 1480000,
+        "MEAN_PRICE_AREA": 1463000,
+        "SUBURB_PRICE_GROWTH": 1.1957,
+        "AVG_RENTAL_PRICE": 820,
+        "RENT_RATE": 3.025,
+        "RENTAL_PRICE_GROWTH": 5.1282,
+        "RENTAL_GROWTH": 7.5,
+        "PROPERTY_SALES_VOLUME": 353,
+        "HISTORICAL_CAPITAL_GROWTH": 38.0136,
+        "AIR_QUALITY": 11.46,
+    },
+    ('Mosman', 'House'): {
+        "SUBURB_MEAN_PRICE": 5842500,
+        "MEAN_PRICE_AREA": 6126000,
+        "SUBURB_PRICE_GROWTH": 5.8584,
+        "AVG_RENTAL_PRICE": 2300,
+        "RENT_RATE": 1.87,
+        "RENTAL_PRICE_GROWTH": 4.5455,
+        "RENTAL_GROWTH": 15.7,
+        "PROPERTY_SALES_VOLUME": 240,
+        "HISTORICAL_CAPITAL_GROWTH": 61.6275,
+        "AIR_QUALITY": 11.46,
+    },
+    ('Mosman', 'Townhouse'): {
+        "SUBURB_MEAN_PRICE": 1480000,
+        "MEAN_PRICE_AREA": 1463000,
+        "SUBURB_PRICE_GROWTH": 1.1957,
+        "AVG_RENTAL_PRICE": 820,
+        "RENT_RATE": 3.025,
+        "RENTAL_PRICE_GROWTH": 5.1282,
+        "RENTAL_GROWTH": 7.5,
+        "PROPERTY_SALES_VOLUME": 353,
+        "HISTORICAL_CAPITAL_GROWTH": 38.0136,
+        "AIR_QUALITY": 11.46,
+    },
+    ('Mosman', 'Unit'): {
+        "SUBURB_MEAN_PRICE": 1480000,
+        "MEAN_PRICE_AREA": 1463000,
+        "SUBURB_PRICE_GROWTH": 1.1957,
+        "AVG_RENTAL_PRICE": 820,
+        "RENT_RATE": 3.025,
+        "RENTAL_PRICE_GROWTH": 5.1282,
+        "RENTAL_GROWTH": 7.5,
+        "PROPERTY_SALES_VOLUME": 353,
+        "HISTORICAL_CAPITAL_GROWTH": 38.0136,
+        "AIR_QUALITY": 11.46,
+    },
+    ('Parramatta', 'Apartment'): {
+        "SUBURB_MEAN_PRICE": 623000,
+        "MEAN_PRICE_AREA": 748000,
+        "SUBURB_PRICE_GROWTH": 2.6756,
+        "AVG_RENTAL_PRICE": 680,
+        "RENT_RATE": 5.77,
+        "RENTAL_PRICE_GROWTH": 4.6154,
+        "RENTAL_GROWTH": 4.3,
+        "PROPERTY_SALES_VOLUME": 948,
+        "HISTORICAL_CAPITAL_GROWTH": 5.9591,
+        "AIR_QUALITY": 11.46,
+    },
+    ('Parramatta', 'House'): {
+        "SUBURB_MEAN_PRICE": 1610000,
+        "MEAN_PRICE_AREA": 1977000,
+        "SUBURB_PRICE_GROWTH": -6.0132,
+        "AVG_RENTAL_PRICE": 750,
+        "RENT_RATE": 2.395,
+        "RENTAL_PRICE_GROWTH": 7.1429,
+        "RENTAL_GROWTH": -0.8,
+        "PROPERTY_SALES_VOLUME": 35,
+        "HISTORICAL_CAPITAL_GROWTH": 43.1776,
+        "AIR_QUALITY": 13.52,
+    },
+    ('Parramatta', 'Townhouse'): {
+        "SUBURB_MEAN_PRICE": 623000,
+        "MEAN_PRICE_AREA": 748000,
+        "SUBURB_PRICE_GROWTH": 2.6756,
+        "AVG_RENTAL_PRICE": 680,
+        "RENT_RATE": 5.77,
+        "RENTAL_PRICE_GROWTH": 4.6154,
+        "RENTAL_GROWTH": 4.3,
+        "PROPERTY_SALES_VOLUME": 948,
+        "HISTORICAL_CAPITAL_GROWTH": 5.9591,
+        "AIR_QUALITY": 13.52,
+    },
+    ('Parramatta', 'Unit'): {
+        "SUBURB_MEAN_PRICE": 623000,
+        "MEAN_PRICE_AREA": 748000,
+        "SUBURB_PRICE_GROWTH": 2.6756,
+        "AVG_RENTAL_PRICE": 680,
+        "RENT_RATE": 5.77,
+        "RENTAL_PRICE_GROWTH": 4.6154,
+        "RENTAL_GROWTH": 4.3,
+        "PROPERTY_SALES_VOLUME": 948,
+        "HISTORICAL_CAPITAL_GROWTH": 5.9591,
+        "AIR_QUALITY": 11.46,
+    },
+}
+
+BY_SUBURB: dict[str, dict[str, float]] = {
+    "Campbelltown": {
+        "RENTAL_VACANCY_RATE": 1.24,
+        "VACANCY_RATE": 1.11,
+        "POPULATION_GROWTH": 7.87,
+        "CRIME_STATISTICS": 126.3,
+        "COUNCIL_RATES": 1443.248,
+        "POSTCODE": "2560",
+    },
+    "Mosman": {
+        "RENTAL_VACANCY_RATE": 2.31,
+        "VACANCY_RATE": 1.66,
+        "POPULATION_GROWTH": -0.51,
+        "CRIME_STATISTICS": 27.6,
+        "COUNCIL_RATES": 1695.977,
+        "POSTCODE": "2088",
+    },
+    "Parramatta": {
+        "RENTAL_VACANCY_RATE": 1.74,
+        "VACANCY_RATE": 1.35,
+        "POPULATION_GROWTH": 11.92,
+        "CRIME_STATISTICS": 287.3,
+        "COUNCIL_RATES": 1102.7651,
+        "POSTCODE": "2150",
+    },
+}
+
+
+def fill(suburb: str | None, property_type: str | None) -> dict[str, Any]:
+    values: dict[str, Any] = {}
+    if suburb in BY_SUBURB:
+        values.update(BY_SUBURB[suburb])
+    if (suburb, property_type) in BY_SUBURB_TYPE:
+        values.update(BY_SUBURB_TYPE[(suburb, property_type)])
+    return values
+
+
+def known_suburbs() -> list[str]:
+    return sorted(BY_SUBURB)
