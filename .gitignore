@@ -54,7 +54,6 @@ artifacts/
 checkpoints/
 
 # Serialized models
-*.pkl
 *.pickle
 *.joblib
 *.h5
