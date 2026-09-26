@@ -49,43 +49,43 @@ pipeline {
                 '''
             }
         }
-        stage('Code Quality') {
-          agent {
-            docker {
-              image 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
-              reuseNode true
-            }
-          }
-          steps {
-            sh '''
-              uv sync --frozen
-              uv run ruff check .
-              uv run ruff format --check .
-            '''
-          }
-        }
 //         stage('Code Quality') {
-//             agent {
-//                 docker {
-//                     image 'python:3.12-slim'
-//                     reuseNode true
-//                 }
+//           agent {
+//             docker {
+//               image 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
+//               reuseNode true
 //             }
-//
-//             steps {
-//                 sh '''
-//                     python -m pip install uv
-//
-//                     echo "Scanning Python source code..."
-//
-//                     uvx --from 'bandit[toml]' bandit -c pyproject.toml -r .
-//
-//                     echo "Scanning dependencies..."
-//                     uv export --frozen --no-hashes --no-emit-project --output-file requirements-audit.txt
-//                     uvx pip-audit -r requirements-audit.txt
-//                 '''
-//             }
+//           }
+//           steps {
+//             sh '''
+//               uv sync --frozen
+//               uv run ruff check .
+//               uv run ruff format --check .
+//             '''
+//           }
 //         }
+        stage('Code Quality') {
+            agent {
+                docker {
+                    image 'python:3.12-slim'
+                    reuseNode true
+                }
+            }
+
+            steps {
+                sh '''
+                    python -m pip install uv
+
+                    echo "Scanning Python source code..."
+
+                    uvx --from 'bandit[toml]' bandit -c pyproject.toml -r .
+
+                    echo "Scanning dependencies..."
+                    uv export --frozen --no-hashes --no-emit-project --output-file requirements-audit.txt
+                    uvx pip-audit -r requirements-audit.txt
+                '''
+            }
+        }
 
 
         stage('Security Analysis') {
