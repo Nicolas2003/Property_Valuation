@@ -1,5 +1,5 @@
 [project]
-name = "house-price-estimator"
+name = "Property Valuation"
 version = "0.1.0"
 description = "Single-page app estimating a house price from 63 features, by four interchangeable methods"
 requires-python = ">=3.12"
@@ -23,3 +23,11 @@ package = false
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.bandit]
+exclude_dirs = [
+    "tests",
+    ".venv",
+    ".git",
+    "__pycache__"
+]
