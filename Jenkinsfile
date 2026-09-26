@@ -10,8 +10,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/Nicolas2003/Property_Valuation.git'
+                checkout scm
             }
         }
         stage('Installing Tools') {
