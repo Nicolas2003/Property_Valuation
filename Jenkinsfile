@@ -110,7 +110,9 @@ pipeline {
           when { branch 'main' }
           steps {
             sshagent(credentials: ['droplet-ssh']) {
-              withCredentials([usernamePassword(credentialsId: 'ghcr-token')]) {
+              withCredentials([usernamePassword(credentialsId: 'ghcr-token',
+                                                usernameVariable: 'KAMAL_REGISTRY_USERNAME',
+                                                passwordVariable: 'KAMAL_REGISTRY_PASSWORD')]) {
                 sh '''
                   git branch -f jenkins-deploy HEAD
                   kamal deploy
@@ -119,8 +121,5 @@ pipeline {
             }
           }
         }
-
-
-
     }
 }

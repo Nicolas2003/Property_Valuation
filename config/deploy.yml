@@ -1,6 +1,6 @@
-service: house-price-estimator
+service: Property_Valuation
 
-image: rpazevedo/house-price-estimator
+image: Nicolas2003/Property_Valuation
 
 servers:
   web:
@@ -15,7 +15,7 @@ proxy:
 
 registry:
   server: ghcr.io
-  username: rpazevedo
+  username: Nicolas2003
   password:
     - KAMAL_REGISTRY_PASSWORD
 
