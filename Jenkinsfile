@@ -8,45 +8,19 @@ pipeline {
     }
 
     stages {
-//         stage('Checkout') {
-//             steps {
-//                 checkout scm
-//             }
-//         }
         stage('Installing Tools') {
             steps {
                 sh '''
                     set -eu
 
                     apt-get update
-                    DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential ruby-full git curl openssh-client
+                    DEBIAN_FRONTEND=noninteractive apt-get install -y ruby-full git
 
                     ruby --version
                     gem --version
                 '''
             }
         }
-
-        stage('Installing Homebrew') {
-            steps {
-                sh '''
-                    set -eu
-
-                    if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
-                        echo "Homebrew is already installed"
-                    else
-                        echo "Installing Homebrew..."
-
-                        curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh -o /tmp/homebrew-install.sh
-                        NONINTERACTIVE=1 /bin/bash /tmp/homebrew-install.sh
-                    fi
-
-                    command -v brew
-                    brew --version
-                '''
-            }
-        }
-
         stage('Installing Kamal'){
             steps{
                 sh 'apt-get --version'
@@ -54,30 +28,7 @@ pipeline {
                 sh 'kamal --version'
             }
         }
-        stage('Security') {
-            agent {
-                docker {
-                    image 'python:3.12-slim'
-                    reuseNode true
-                }
-            }
-
-            steps {
-                sh '''
-                    python -m pip install uv
-
-                    echo "Scanning Python source code..."
-
-                    uvx --from 'bandit[toml]' bandit -c pyproject.toml -r .
-
-                    echo "Scanning dependencies..."
-                    uv export --frozen --no-hashes --no-emit-project --output-file requirements-audit.txt
-                    uvx pip-audit -r requirements-audit.txt
-                '''
-            }
-        }
-
-        stage('Python Tests') {
+        stage('Tests') {
             agent {
                 docker {
                     image 'python:3.12-slim'
@@ -98,14 +49,52 @@ pipeline {
                 '''
             }
         }
-
-//         stage('SonarQube analysis') {
-//             steps {
-//                 withSonarQubeEnv('SonarCloud') {
-//                     sh "${tool 'sonar-scanner'}/bin/sonar-scanner"
+        stage('Code Quality') {
+          agent {
+            docker {
+              image 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
+              reuseNode true
+            }
+          }
+          steps {
+            sh '''
+              uv sync --frozen
+              uv run ruff check .
+              uv run ruff format --check .
+            '''
+          }
+        }
+//         stage('Code Quality') {
+//             agent {
+//                 docker {
+//                     image 'python:3.12-slim'
+//                     reuseNode true
 //                 }
 //             }
+//
+//             steps {
+//                 sh '''
+//                     python -m pip install uv
+//
+//                     echo "Scanning Python source code..."
+//
+//                     uvx --from 'bandit[toml]' bandit -c pyproject.toml -r .
+//
+//                     echo "Scanning dependencies..."
+//                     uv export --frozen --no-hashes --no-emit-project --output-file requirements-audit.txt
+//                     uvx pip-audit -r requirements-audit.txt
+//                 '''
+//             }
 //         }
+
+
+        stage('Security Analysis') {
+            steps {
+                withSonarQubeEnv('SonarCloud') {
+                    sh "${tool 'sonar-scanner'}/bin/sonar-scanner"
+                }
+            }
+        }
         stage('Deploy') {
           when { branch 'main' }
           steps {
