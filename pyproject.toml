@@ -1,5 +1,5 @@
 [project]
-name = "Property Valuation"
+name = "Property-Valuation"
 version = "0.1.0"
 description = "Single-page app estimating a house price from 63 features, by four interchangeable methods"
 requires-python = ">=3.12"
