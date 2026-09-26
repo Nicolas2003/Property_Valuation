@@ -11,10 +11,11 @@ ENV UV_COMPILE_BYTECODE=1 \
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock .python-version ./
+COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-COPY .streamlit/config.toml .streamlit/config.toml
+COPY estimator/ estimator/
+COPY data/ data/
 COPY app.py ./
 
 ARG GIT_SHA=unknown
