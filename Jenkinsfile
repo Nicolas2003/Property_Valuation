@@ -110,12 +110,7 @@ pipeline {
           when { branch 'main' }
           steps {
             sshagent(credentials: ['droplet-ssh']) {
-              withCredentials([usernamePassword(credentialsId: 'ghcr-token',
-                                                usernameVariable: 'KAMAL_REGISTRY_USERNAME',
-                                                passwordVariable: 'KAMAL_REGISTRY_PASSWORD')]) {
-                // Kamal builds from a clone of this workspace, kept between builds, and updates
-                // it with `git fetch`, which only fetches branches. Jenkins checks out a detached
-                // HEAD, so point a branch at it or the fetch misses the commit being deployed.
+              withCredentials([usernamePassword(credentialsId: 'ghcr-token')]) {
                 sh '''
                   git branch -f jenkins-deploy HEAD
                   kamal deploy
