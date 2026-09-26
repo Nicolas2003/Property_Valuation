@@ -1,6 +1,6 @@
 service: Property_Valuation
 
-image: Nicolas2003/Property_Valuation
+image: Nicolas2003/property_valuation
 
 servers:
   web:

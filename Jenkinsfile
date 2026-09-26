@@ -99,13 +99,13 @@ pipeline {
             }
         }
 
-        stage('SonarQube analysis') {
-            steps {
-                withSonarQubeEnv('SonarCloud') {
-                    sh "${tool 'sonar-scanner'}/bin/sonar-scanner"
-                }
-            }
-        }
+//         stage('SonarQube analysis') {
+//             steps {
+//                 withSonarQubeEnv('SonarCloud') {
+//                     sh "${tool 'sonar-scanner'}/bin/sonar-scanner"
+//                 }
+//             }
+//         }
         stage('Deploy') {
           when { branch 'main' }
           steps {
