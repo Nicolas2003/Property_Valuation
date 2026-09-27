@@ -205,8 +205,11 @@ kamal deploy -d staging
 Every other command takes `-d staging` too, e.g. `kamal logs -d staging`. The first deploy needs
 the `houses-staging` A record (see [One-time setup: DNS](#one-time-setup-dns)).
 
-On `main`, Jenkins deploys to staging, smoke-tests `/_stcore/health`, then deploys to production
-and smoke-tests it. A failing staging deploy or smoke test stops the pipeline before production.
+On `main`, Jenkins builds the image once and pushes it to GHCR under both services' images,
+tagged with the commit SHA. The two differ only in their `service` label, which Kamal checks on
+pull. It then deploys to staging with `--skip-push`, smoke-tests `/_stcore/health`, and deploys the
+same image to production the same way. A failing staging deploy or smoke test stops the pipeline
+before production.
 
 ## Operations
 
