@@ -73,7 +73,7 @@ def test_read_csv_passes_on_an_empty_file_error():
 
 
 def test_read_csv_accepts_bytes_with_a_bom():
-    upload = read_csv(("﻿" + TWO_ROWS).encode())
+    upload = read_csv(("\ufeff" + TWO_ROWS).encode())
 
     assert upload.features["LAND_SIZE"] == pytest.approx(1407.0)
 
