@@ -148,4 +148,4 @@ def fitted_models() -> dict[str, object]:
     return models
 
 
-__all__ = ["MultiHotEncoder", "build_preprocessor", "fitted_models", "TRAINERS"]
+__all__ = ["TRAINERS", "MultiHotEncoder", "build_preprocessor", "fitted_models"]

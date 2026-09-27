@@ -45,7 +45,7 @@ def test_empty_file_is_an_error():
 def test_row_label_uses_the_address_when_present():
     rows, _ = list_rows(TWO_ROWS)
 
-    assert row_label(0, rows[0]) == "#1 — 13/5 THE ESPLANADE, MOSMAN, NSW 2088"
+    assert row_label(0, rows[0]) == "#1 - 13/5 THE ESPLANADE, MOSMAN, NSW 2088"
     assert row_label(1, rows[1]) == "#2"
 
 

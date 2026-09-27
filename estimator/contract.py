@@ -22,11 +22,11 @@ class Estimate:
         return self.low is not None and self.high is not None
 
     @classmethod
-    def unavailable(cls, reason: str) -> "Estimate":
+    def unavailable(cls, reason: str) -> Estimate:
         return cls(price=None, notes=reason)
 
     @classmethod
-    def needs(cls, *fields: str) -> "Estimate":
+    def needs(cls, *fields: str) -> Estimate:
         return cls.unavailable("needs " + ", ".join(fields))
 
 

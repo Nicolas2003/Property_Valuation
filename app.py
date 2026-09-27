@@ -21,7 +21,7 @@ from estimator.validation import parse_all
 
 LEADING = ["SUBURB", "PROPERTY_TYPE"]
 
-BLANK = "—"
+BLANK = "-"
 TRISTATE = [BLANK, "Yes", "No"]
 
 PLACEHOLDERS = {
@@ -204,7 +204,7 @@ apply_autofill()
 if chosen("SUBURB") and chosen("SUBURB") not in known_suburbs():
     st.info(
         f"No market data collected for {chosen('SUBURB')}. "
-        "The auto-filled fields are left blank — enter them by hand if you have them."
+        "The auto-filled fields are left blank - enter them by hand if you have them."
     )
 
 with st.form("features"):
@@ -222,7 +222,7 @@ with st.form("features"):
         derived_section = derived_count > len(specs) / 2
         with st.expander(
             f"{section} ({len(specs)})"
-            + (" — auto-filled from suburb and type" if derived_section else ""),
+            + (" - auto-filled from suburb and type" if derived_section else ""),
             expanded=not derived_section,
         ):
             columns = st.columns(3)

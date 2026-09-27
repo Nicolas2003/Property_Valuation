@@ -39,7 +39,7 @@ def list_rows(source: IO[bytes] | IO[str] | str | bytes) -> tuple[list[dict[str,
 
 def row_label(index: int, row: dict[str, str]) -> str:
     address = (row.get("ADDRESS") or "").strip()
-    return f"#{index + 1} — {address}" if address else f"#{index + 1}"
+    return f"#{index + 1} - {address}" if address else f"#{index + 1}"
 
 
 def read_csv(source: IO[bytes] | IO[str] | str | bytes, row: int = 0) -> Upload:

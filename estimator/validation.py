@@ -4,9 +4,9 @@ import math
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any
-from .lookups import BY_SUBURB
 
 from .features import BY_NAME, FEATURE_NAMES, OUTDOOR_NONE, FeatureSpec
+from .lookups import BY_SUBURB
 
 NUMERIC_CATEGORIES = {"GARAGE_AREA"}
 
@@ -20,7 +20,7 @@ class Issue:
     message: str
 
     def __str__(self) -> str:
-        return f"**{self.name}** — {self.message}"
+        return f"**{self.name}** - {self.message}"
 
 
 @dataclass
