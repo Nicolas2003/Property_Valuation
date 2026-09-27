@@ -1,51 +1,24 @@
 pipeline {
     agent any
-    environment {
-        PATH = "/home/linuxbrew/.linuxbrew/bin:${env.PATH}"
-    }
     triggers {
         pollSCM('* * * * *')
     }
 
     stages {
-        stage('Installing Tools') {
-            steps {
-                sh '''
-                    set -eu
-
-                    apt-get update
-                    DEBIAN_FRONTEND=noninteractive apt-get install -y ruby-full git
-
-                    ruby --version
-                    gem --version
-                '''
-            }
-        }
-        stage('Installing Kamal'){
-            steps{
-                sh 'apt-get --version'
-                sh 'gem install kamal'
-                sh 'kamal --version'
-            }
-        }
+        // Tests and Code Quality Check share the workspace .venv (reuseNode), so they must
+        // use the same Python. A different one makes uv delete and rebuild the whole .venv.
         stage('Tests') {
             agent {
                 docker {
-                    image 'python:3.12-slim'
+                    image 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
                     reuseNode true
                 }
             }
             steps {
-                sh 'python --version'
-
                 sh '''
-                    python -m pip install --upgrade pip
-                    python -m pip install uv
-
                     uv --version
-                    uv sync
+                    uv sync --locked
                     uv run pytest -v
-                    ls -lsa
                 '''
             }
         }
@@ -58,7 +31,7 @@ pipeline {
           }
           steps {
             sh '''
-              uv sync --frozen
+              uv sync --locked
               uv run ruff check .
               uv run ruff format --check .
             '''
@@ -103,6 +76,7 @@ pipeline {
                                                 usernameVariable: 'KAMAL_REGISTRY_USERNAME',
                                                 passwordVariable: 'KAMAL_REGISTRY_PASSWORD')]) {
                 sh '''
+                  kamal version
                   git branch -f jenkins-deploy HEAD
                   kamal deploy
                 '''
