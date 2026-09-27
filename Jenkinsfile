@@ -3,9 +3,9 @@ pipeline {
     environment {
         PATH = "/home/linuxbrew/.linuxbrew/bin:${env.PATH}"
     }
-    triggers {
-        pollSCM('H/10 * * * *')
-    }
+//     triggers {
+//         pollSCM('H/10 * * * *')
+//     }
 
     stages {
         stage('Installing Tools') {
