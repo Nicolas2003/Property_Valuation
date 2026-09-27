@@ -71,7 +71,7 @@ This has four consequences:
 | File | Purpose |
 |---|---|
 | `Dockerfile` | Production image: `python:3.13-slim` + `uv sync --frozen --no-dev`, runs Streamlit on `0.0.0.0:8501` as a non-root user. |
-| `.dockerignore` | Keeps the notebook, tests, scripts, `.venv`, `.git` and local secrets out of the build context. |
+| `.dockerignore` | Keeps tests, scripts, docs, `.venv`, `.git`, CI output and local secrets out of the build context. |
 | `config/deploy.yml` | Kamal config: server, proxy host, app port, healthcheck, registry, builder arch. |
 | `config/deploy.staging.yml` | Staging overrides (`kamal deploy -d staging`): its own service, image and host. |
 | `.kamal/secrets-common` | Secrets passed to Kamal for every destination. Only `KAMAL_REGISTRY_PASSWORD` (the GHCR token), read from your environment. |
