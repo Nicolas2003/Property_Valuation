@@ -8,7 +8,8 @@ dependencies = [
     "pandas>=2.2",
     "numpy>=2.0",
     "scikit-learn==1.9.1",
-    "xgboost>=3.4.1",
+    "xgboost>=3.4.1; sys_platform != 'linux'",
+    "xgboost-cpu>=3.4.1; sys_platform == 'linux'",
     "joblib>=1.6.0",
 ]
 
