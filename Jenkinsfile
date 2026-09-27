@@ -28,24 +28,20 @@ pipeline {
                 sh 'kamal --version'
             }
         }
+        // Tests and Code Quality Check share the workspace .venv (reuseNode), so they must
+        // use the same Python. A different one makes uv delete and rebuild the whole .venv.
         stage('Tests') {
             agent {
                 docker {
-                    image 'python:3.12-slim'
+                    image 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
                     reuseNode true
                 }
             }
             steps {
-                sh 'python --version'
-
                 sh '''
-                    python -m pip install --upgrade pip
-                    python -m pip install uv
-
                     uv --version
-                    uv sync
+                    uv sync --locked
                     uv run pytest -v
-                    ls -lsa
                 '''
             }
         }
@@ -58,7 +54,7 @@ pipeline {
           }
           steps {
             sh '''
-              uv sync --frozen
+              uv sync --locked
               uv run ruff check .
               uv run ruff format --check .
             '''
