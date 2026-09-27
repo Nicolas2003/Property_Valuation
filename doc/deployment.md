@@ -102,15 +102,17 @@ Key lines in the `Dockerfile`:
   re-resolving if the lock is out of date. This matters more than usual here: the saved models in
   `estimator/ml/saved_models/` only load reliably in the scikit-learn version that pickled them,
   which `pyproject.toml` pins.
-- **`--no-install-package nvidia-nccl-cu13`**: on Linux, xgboost depends on NVIDIA's NCCL, a
-  250 MB wheel used only for multi-GPU training. The droplet has no GPU, and the app only runs
-  predictions, so it's left out. That keeps the image, the emulated amd64 build, and every push
-  and pull a few hundred MB lighter. The lock file is unchanged, so local installs still get it.
-- **`UV_NO_CACHE=1`, no `chown -R`**: uv's download cache would otherwise stay in the install
-  layer, and a recursive `chown` copies every file into a new layer. Either one adds several
-  hundred MB. The files stay owned by root, which the non-root `streamlit` user can read, and the
-  app never writes to `/app`. The image comes to about 880 MB, mostly pyarrow, scipy, xgboost and
-  pandas.
+- **`xgboost-cpu` on Linux** (`pyproject.toml`): the regular xgboost wheel for Linux bundles CUDA
+  and depends on NVIDIA's NCCL, a 250 MB wheel used only for GPU training. The droplet has no GPU,
+  so Linux installs, both the image and the CI containers, get the 6 MB CPU-only build. macOS
+  keeps the regular package, which has no GPU extras.
+- **uv cache mount, no `chown -R`**: the cache mount keeps uv's download cache out of the install
+  layer, while still reusing it on the next build. A recursive `chown` would copy every file into
+  a new layer. Either one adds about 1 GB. The files stay owned by root, which the non-root
+  `streamlit` user can read, and the app never writes to `/app`. The image comes to about 820 MB,
+  mostly pyarrow, scipy and pandas.
+- **`GIT_SHA` / `GIT_COMMITTED_AT` last**: they change on every commit, so declaring them any
+  earlier would rebuild every layer below them.
 - **`COPY estimator/ data/`**: the code finds the models and the training CSV relative to its own
   files, so the image keeps the repository's layout.
 
