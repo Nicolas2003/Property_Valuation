@@ -15,7 +15,18 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=8",
+    "ruff>=0.16.8",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "PT", "C4", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S"]
 
 [tool.uv]
 package = false
@@ -24,10 +35,10 @@ package = false
 pythonpath = ["."]
 testpaths = ["tests"]
 
-[tool.bandit]
-exclude_dirs = [
-    "tests",
-    ".venv",
-    ".git",
-    "__pycache__"
-]
+#[tool.bandit]
+#exclude_dirs = [
+#    "tests",
+#    ".venv",
+#    ".git",
+#    "__pycache__"
+#]
