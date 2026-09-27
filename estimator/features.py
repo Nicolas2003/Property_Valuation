@@ -259,7 +259,7 @@ FEATURES: list[FeatureSpec] = [
         "DISTANCE_TO_CBD",
         "number",
         unit="km",
-        help="Distance to the Sydney CBD (Sydney GPO, −33.8675, 151.2070).",
+        help="Distance to the Sydney CBD (Sydney GPO, -33.8675, 151.2070).",
         lo=3.824,
         hi=45.829,
         section="Location",

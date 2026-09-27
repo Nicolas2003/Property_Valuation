@@ -4,7 +4,7 @@ pipeline {
         PATH = "/home/linuxbrew/.linuxbrew/bin:${env.PATH}"
     }
     triggers {
-        pollSCM('* * * * *')
+        pollSCM('H/1 * * * *')
     }
 
     stages {
