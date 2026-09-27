@@ -1,6 +1,12 @@
 pipeline {
   agent any
 
+  environment {
+    STAGING_URL    = 'https://houses-staging.kmaster.app'
+    PRODUCTION_URL = 'https://houses.kmaster.app'
+    HEALTH_PATH    = '/_stcore/health'
+  }
+
   triggers {
     pollSCM('* * * * *')
   }
@@ -39,7 +45,30 @@ pipeline {
       }
     }
 
-    stage('Deploy') {
+    stage('Deploy to Staging') {
+      when { branch 'main' }
+      steps {
+        sshagent(credentials: ['droplet-ssh']) {
+          withCredentials([usernamePassword(credentialsId: 'ghcr-token',
+                                            usernameVariable: 'KAMAL_REGISTRY_USERNAME',
+                                            passwordVariable: 'KAMAL_REGISTRY_PASSWORD')]) {
+            sh '''
+              git branch -f jenkins-deploy HEAD
+              kamal deploy -d staging
+            '''
+          }
+        }
+      }
+    }
+
+    stage('Smoke test Staging') {
+      when { branch 'main' }
+      steps {
+        sh 'curl -fsS --retry 10 --retry-delay 3 --retry-all-errors "$STAGING_URL$HEALTH_PATH"'
+      }
+    }
+
+    stage('Deploy to Production') {
       when { branch 'main' }
       steps {
         sshagent(credentials: ['droplet-ssh']) {
@@ -52,6 +81,13 @@ pipeline {
             '''
           }
         }
+      }
+    }
+
+    stage('Smoke test Production') {
+      when { branch 'main' }
+      steps {
+        sh 'curl -fsS --retry 10 --retry-delay 3 --retry-all-errors "$PRODUCTION_URL$HEALTH_PATH"'
       }
     }
   }

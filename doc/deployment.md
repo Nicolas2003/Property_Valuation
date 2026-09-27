@@ -62,7 +62,7 @@ This has four consequences:
   set -a; source .env; set +a
   ```
 
-  `.kamal/secrets` reads the token from the environment; never commit it. Kamal also logs the
+  `.kamal/secrets-common` reads the token from the environment; never commit it. Kamal also logs the
   droplet in to ghcr.io with it, so the token is stored in `root`'s `~/.docker/config.json` on the
   server. Every deploy logs in again, so after rotating the token just load the new one and deploy.
 
@@ -73,7 +73,8 @@ This has four consequences:
 | `Dockerfile` | Production image: `python:3.13-slim` + `uv sync --frozen --no-dev`, runs Streamlit on `0.0.0.0:8501` as a non-root user. |
 | `.dockerignore` | Keeps the notebook, tests, scripts, `.venv`, `.git` and local secrets out of the build context. |
 | `config/deploy.yml` | Kamal config: server, proxy host, app port, healthcheck, registry, builder arch. |
-| `.kamal/secrets` | Secrets passed to Kamal. Only `KAMAL_REGISTRY_PASSWORD` (the GHCR token), read from your environment. |
+| `config/deploy.staging.yml` | Staging overrides (`kamal deploy -d staging`): its own service, image and host. |
+| `.kamal/secrets-common` | Secrets passed to Kamal for every destination. Only `KAMAL_REGISTRY_PASSWORD` (the GHCR token), read from your environment. |
 | `.env.example` | Template for a local, gitignored `.env` holding the token. |
 
 Key settings in `config/deploy.yml`:
@@ -135,7 +136,7 @@ After the first deploy:
 `kmaster.app` is hosted on DigitalOcean DNS (`ns1/ns2/ns3.digitalocean.com`).
 
 1. In the DigitalOcean control panel, go to **Networking → Domains → kmaster.app**.
-2. Add an **A record**: hostname `houses`, value `209.38.93.10`.
+2. Add an **A record**: hostname `houses` (and `houses-staging` for staging), value `209.38.93.10`.
 3. Check the authoritative nameserver answers:
 
    ```sh
@@ -188,6 +189,24 @@ kamal deploy
 
 Kamal tags the image with the current git commit SHA. Uncommitted changes are *not* included, so
 commit first.
+
+## Staging
+
+Staging runs on the same droplet at **https://houses-staging.kmaster.app**, as its own Kamal
+service (`property_valuation_staging`) and image. `config/deploy.staging.yml` is merged over
+`config/deploy.yml`. It isn't just another destination of the production service because Kamal
+prunes containers and images by service label only, so staging deploys would delete production's
+rollback containers.
+
+```sh
+kamal deploy -d staging
+```
+
+Every other command takes `-d staging` too, e.g. `kamal logs -d staging`. The first deploy needs
+the `houses-staging` A record (see [One-time setup: DNS](#one-time-setup-dns)).
+
+On `main`, Jenkins deploys to staging, smoke-tests `/_stcore/health`, then deploys to production
+and smoke-tests it. A failing staging deploy or smoke test stops the pipeline before production.
 
 ## Operations
 
