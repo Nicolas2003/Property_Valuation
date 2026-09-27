@@ -4,6 +4,8 @@ from typing import Any
 
 import streamlit as st
 
+import db
+import users
 from estimator.csv_input import list_rows, read_row, row_label
 from estimator.features import (
     BY_NAME,
@@ -147,7 +149,48 @@ def collect() -> dict[str, Any]:
     return raw
 
 
+def log_in_form() -> None:
+    with st.form("log_in"):
+        username = st.text_input("Username", key="log_in_username")
+        password = st.text_input("Password", type="password", key="log_in_password")
+        if st.form_submit_button("Log in"):
+            with db.connect() as conn:
+                user = users.authenticate(conn, username, password)
+            if user:
+                st.session_state.username = user
+                st.rerun()
+            st.error("Invalid username or password.")
+
+
+def sign_up_form() -> None:
+    with st.form("sign_up"):
+        username = st.text_input("Username", key="sign_up_username")
+        password = st.text_input("Password", type="password", key="sign_up_password")
+        confirm = st.text_input("Confirm password", type="password", key="sign_up_confirm")
+        if st.form_submit_button("Sign up"):
+            if password != confirm:
+                st.error("The passwords don't match.")
+                return
+            try:
+                with db.connect() as conn:
+                    st.session_state.username = users.sign_up(conn, username, password)
+            except users.InvalidSignUp as error:
+                st.error(str(error))
+                return
+            st.rerun()
+
+
 st.title("House price estimator")
+
+# The login lasts as long as the browser tab's session.
+if "username" not in st.session_state:
+    log_in_tab, sign_up_tab = st.tabs(["Log in", "Sign up"])
+    with log_in_tab:
+        log_in_form()
+    with sign_up_tab:
+        sign_up_form()
+    st.stop()
+
 st.caption(f"{len(FEATURE_NAMES)} property, location and market features: {len(ESTIMATORS)} independent estimates.")
 
 with st.sidebar:
@@ -184,6 +227,9 @@ with st.sidebar:
                 st.error(str(error))
     st.divider()
     st.caption("Samples: `data/sample_property.csv` (one row), `data/the_sold_properties_V2.csv` (150 rows)")
+    st.divider()
+    st.write(f"Signed in as **{st.session_state.username}**")
+    st.button("Log out", key="log_out", on_click=st.session_state.pop, args=("username", None))
 
 st.subheader("Where and what")
 lead = st.columns(len(LEADING))

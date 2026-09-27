@@ -11,6 +11,8 @@ dependencies = [
     "xgboost>=3.4.1; sys_platform != 'linux'",
     "xgboost-cpu>=3.4.1; sys_platform == 'linux'",
     "joblib>=1.6.0",
+    "argon2-cffi>=25.1.0",
+    "psycopg[binary]>=3.3.6",
 ]
 
 [dependency-groups]
