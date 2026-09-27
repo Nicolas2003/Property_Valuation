@@ -1,88 +1,58 @@
 pipeline {
-    agent any
-    triggers {
-        pollSCM('* * * * *')
+  agent any
+
+  triggers {
+    pollSCM('* * * * *')
+  }
+
+  stages {
+    // Code Quality Check and Tests share the workspace .venv (reuseNode), so they must
+    // use the same Python. A different one makes uv delete and rebuild the whole .venv.
+    stage('Code Quality Check') {
+      agent {
+        docker {
+          image 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
+          reuseNode true
+        }
+      }
+      steps {
+        sh '''
+          uv sync --locked
+          uv run ruff check .
+          uv run ruff format --check .
+        '''
+      }
     }
 
-    stages {
-        // Tests and Code Quality Check share the workspace .venv (reuseNode), so they must
-        // use the same Python. A different one makes uv delete and rebuild the whole .venv.
-        stage('Tests') {
-            agent {
-                docker {
-                    image 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
-                    reuseNode true
-                }
-            }
-            steps {
-                sh '''
-                    uv --version
-                    uv sync --locked
-                    uv run pytest -v
-                '''
-            }
+    stage('Tests') {
+      agent {
+        docker {
+          image 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
+          reuseNode true
         }
-        stage('Code Quality Check') {
-          agent {
-            docker {
-              image 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
-              reuseNode true
-            }
-          }
-          steps {
+      }
+      steps {
+        sh '''
+          uv sync --locked
+          uv run pytest -v
+        '''
+      }
+    }
+
+    stage('Deploy') {
+      when { branch 'main' }
+      steps {
+        sshagent(credentials: ['droplet-ssh']) {
+          withCredentials([usernamePassword(credentialsId: 'ghcr-token',
+                                            usernameVariable: 'KAMAL_REGISTRY_USERNAME',
+                                            passwordVariable: 'KAMAL_REGISTRY_PASSWORD')]) {
             sh '''
-              uv sync --locked
-              uv run ruff check .
-              uv run ruff format --check .
+              git branch -f jenkins-deploy HEAD
+              kamal deploy
             '''
           }
         }
-//         stage('Code Quality') {
-//             agent {
-//                 docker {
-//                     image 'python:3.12-slim'
-//                     reuseNode true
-//                 }
-//             }
-//
-//             steps {
-//                 sh '''
-//                     python -m pip install uv
-//
-//                     echo "Scanning Python source code..."
-//
-//                     uvx --from 'bandit[toml]' bandit -c pyproject.toml -r .
-//
-//                     echo "Scanning dependencies..."
-//                     uv export --frozen --no-hashes --no-emit-project --output-file requirements-audit.txt
-//                     uvx pip-audit -r requirements-audit.txt
-//                 '''
-//             }
-//         }
-
-
-//         stage('Security Analysis') {
-//             steps {
-//                 withSonarQubeEnv('SonarCloud') {
-//                     sh "${tool 'sonar-scanner'}/bin/sonar-scanner"
-//                 }
-//             }
-//         }
-        stage('Deploy') {
-          when { branch 'main' }
-          steps {
-            sshagent(credentials: ['droplet-ssh']) {
-              withCredentials([usernamePassword(credentialsId: 'ghcr-token',
-                                                usernameVariable: 'KAMAL_REGISTRY_USERNAME',
-                                                passwordVariable: 'KAMAL_REGISTRY_PASSWORD')]) {
-                sh '''
-                  kamal version
-                  git branch -f jenkins-deploy HEAD
-                  kamal deploy
-                '''
-              }
-            }
-          }
-        }
+      }
     }
+  }
 }
