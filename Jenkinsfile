@@ -1,8 +1,5 @@
 pipeline {
     agent any
-    environment {
-        PATH = "/home/linuxbrew/.linuxbrew/bin:${env.PATH}"
-    }
     triggers {
         pollSCM('* * * * *')
     }
