@@ -61,9 +61,7 @@ class MultiHotEncoder(BaseEstimator, TransformerMixin):
 
 def build_preprocessor(frame: pd.DataFrame) -> ColumnTransformer:
     numerical_features = frame.select_dtypes(include=["int64", "float64"]).columns
-    categorical_features = frame.select_dtypes(
-        include=["string", "category", "object"]
-    ).columns.drop(EXCLUDE_CATEGORICAL, errors="ignore")
+    categorical_features = frame.select_dtypes(include=["string", "category", "object"]).columns.drop(EXCLUDE_CATEGORICAL, errors="ignore")
 
     numerical_transformer = Pipeline(
         [

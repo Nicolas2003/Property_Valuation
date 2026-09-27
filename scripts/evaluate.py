@@ -8,9 +8,7 @@ from estimator.ml.training import TRAINERS
 
 def main() -> None:
     inputs, outputs = training_frame()
-    train_inputs, test_inputs, train_outputs, test_outputs = train_test_split(
-        inputs, outputs, test_size=1, random_state=42
-    )
+    train_inputs, test_inputs, train_outputs, test_outputs = train_test_split(inputs, outputs, test_size=1, random_state=42)
 
     actual = test_outputs.iloc[0]
     print(f"Fitted on {len(train_inputs)} sales, priced 1 held out.\n")

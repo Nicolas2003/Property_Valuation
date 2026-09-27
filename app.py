@@ -70,9 +70,7 @@ def load_upload(upload) -> None:
     for name, value in upload.features.items():
         spec = BY_NAME[name]
         if value is None:
-            set_raw(
-                name, [] if spec.kind == "multiselect" else ("" if spec.kind != "binary" else False)
-            )
+            set_raw(name, [] if spec.kind == "multiselect" else ("" if spec.kind != "binary" else False))
         elif spec.kind == "binary":
             set_raw(name, bool(value))
         elif spec.kind == "tristate":
@@ -150,17 +148,11 @@ def collect() -> dict[str, Any]:
 
 
 st.title("House price estimator")
-st.caption(
-    f"{len(FEATURE_NAMES)} property, location and market features: "
-    f"{len(ESTIMATORS)} independent estimates."
-)
+st.caption(f"{len(FEATURE_NAMES)} property, location and market features: {len(ESTIMATORS)} independent estimates.")
 
 with st.sidebar:
     st.subheader("Load a property")
-    st.write(
-        "A CSV with a header row and one or more data rows. Any subset of columns is fine; "
-        "with several rows, pick the property to load."
-    )
+    st.write("A CSV with a header row and one or more data rows. Any subset of columns is fine; with several rows, pick the property to load.")
     uploaded = st.file_uploader("CSV file", type="csv", label_visibility="collapsed")
     rows = []
     selected = 0
@@ -191,9 +183,7 @@ with st.sidebar:
             for error in result.report.errors:
                 st.error(str(error))
     st.divider()
-    st.caption(
-        "Samples: `data/sample_property.csv` (one row), `data/the_sold_properties_V2.csv` (150 rows)"
-    )
+    st.caption("Samples: `data/sample_property.csv` (one row), `data/the_sold_properties_V2.csv` (150 rows)")
 
 st.subheader("Where and what")
 lead = st.columns(len(LEADING))
@@ -203,10 +193,7 @@ for column, name in zip(lead, LEADING, strict=True):
 apply_autofill()
 
 if chosen("SUBURB") and chosen("SUBURB") not in known_suburbs():
-    st.info(
-        f"No market data collected for {chosen('SUBURB')}. "
-        "The auto-filled fields are left blank - enter them by hand if you have them."
-    )
+    st.info(f"No market data collected for {chosen('SUBURB')}. The auto-filled fields are left blank - enter them by hand if you have them.")
 
 with st.form("features"):
     for section in SECTIONS:
@@ -222,8 +209,7 @@ with st.form("features"):
                 derived_count += 1
         derived_section = derived_count > len(specs) / 2
         with st.expander(
-            f"{section} ({len(specs)})"
-            + (" - auto-filled from suburb and type" if derived_section else ""),
+            f"{section} ({len(specs)})" + (" - auto-filled from suburb and type" if derived_section else ""),
             expanded=not derived_section,
         ):
             columns = st.columns(3)
@@ -274,6 +260,4 @@ if submitted:
         left.metric("Actual sale price (from CSV)", f"${actual:,.0f}")
         if priced:
             error_pct = (sum(priced) / len(priced) - actual) / actual * 100
-            right.metric(
-                "Mean estimate", f"${sum(priced) / len(priced):,.0f}", f"{error_pct:+.1f}%"
-            )
+            right.metric("Mean estimate", f"${sum(priced) / len(priced):,.0f}", f"{error_pct:+.1f}%")

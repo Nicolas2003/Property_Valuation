@@ -14,9 +14,5 @@ def estimate_with(model_key: str, features: Features) -> Estimate:
     model = saved_models()[model_key]
     price = model.predict(to_saved_frame(features, model))[0]
     blank, total = blank_inputs(features, model)
-    note = (
-        f"{blank} of {total} inputs left blank, filled from the training set."
-        if blank
-        else f"All {total} inputs answered."
-    )
+    note = f"{blank} of {total} inputs left blank, filled from the training set." if blank else f"All {total} inputs answered."
     return Estimate(price=float(price), notes=note)

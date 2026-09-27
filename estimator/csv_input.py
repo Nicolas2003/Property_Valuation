@@ -52,8 +52,7 @@ def read_csv(source: IO[bytes] | IO[str] | str | bytes, row: int = 0) -> Upload:
                 errors=[
                     Issue(
                         "file",
-                        f"row index {row} is out of range: the file has {len(rows)} data rows, "
-                        f"indexed 0-{len(rows) - 1} (shown as #1-#{len(rows)})",
+                        f"row index {row} is out of range: the file has {len(rows)} data rows, indexed 0-{len(rows) - 1} (shown as #1-#{len(rows)})",
                     )
                 ]
             )

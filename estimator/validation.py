@@ -163,8 +163,7 @@ def range_warning(spec: FeatureSpec, value: Any) -> Issue | None:
     unit = f" {spec.unit}" if spec.unit else ""
     return Issue(
         spec.name,
-        f"{value:,g}{unit} is outside the range seen in the dataset "
-        f"({spec.lo:,g}-{spec.hi:,g}{unit}). Estimating anyway.",
+        f"{value:,g}{unit} is outside the range seen in the dataset ({spec.lo:,g}-{spec.hi:,g}{unit}). Estimating anyway.",
     )
 
 
@@ -195,8 +194,7 @@ def _history_errors(features: dict[str, Any]) -> list[Issue]:
         return [
             Issue(
                 "PREV_SALE_PRICE",
-                f"the sale history has {len(dates)} date(s) but {len(prices)} "
-                "price(s). They are paired in order, so each prior sale needs both.",
+                f"the sale history has {len(dates)} date(s) but {len(prices)} price(s). They are paired in order, so each prior sale needs both.",
             )
         ]
 
@@ -213,9 +211,7 @@ def _history_errors(features: dict[str, Any]) -> list[Issue]:
         issues.append(
             Issue(
                 "PREV_SALE_DATE",
-                f"{_quoted(repeated)} appears more than once. "
-                "Two sales on one date leave no interval between them, so the "
-                "growth rates cannot be worked out. Keep the later sale.",
+                f"{_quoted(repeated)} appears more than once. Two sales on one date leave no interval between them, so the growth rates cannot be worked out. Keep the later sale.",
             )
         )
 
@@ -227,9 +223,7 @@ def _history_errors(features: dict[str, Any]) -> list[Issue]:
         issues.append(
             Issue(
                 "PREV_SALE_PRICE",
-                f"{_quoted(unusable)} is not a sale price. "
-                "Every prior sale needs a finite price above zero -- the "
-                "percentage change from zero is undefined.",
+                f"{_quoted(unusable)} is not a sale price. Every prior sale needs a finite price above zero -- the percentage change from zero is undefined.",
             )
         )
 
@@ -257,9 +251,7 @@ def _history_date_errors(dates: list[str], sale_date: Any) -> list[Issue]:
             return [
                 Issue(
                     "PREV_SALE_DATE",
-                    f"{_quoted(offenders)} is not before the "
-                    f"sale date ({sale_date}). A prior sale has to predate the sale "
-                    "being priced.",
+                    f"{_quoted(offenders)} is not before the sale date ({sale_date}). A prior sale has to predate the sale being priced.",
                 )
             ]
         return []
@@ -274,8 +266,7 @@ def _history_date_errors(dates: list[str], sale_date: Any) -> list[Issue]:
         return [
             Issue(
                 "PREV_SALE_DATE",
-                f"{_quoted(offenders)} is in the future. "
-                "Enter the SALE_DATE as well if you are pricing a past sale.",
+                f"{_quoted(offenders)} is in the future. Enter the SALE_DATE as well if you are pricing a past sale.",
             )
         ]
     return []
@@ -301,9 +292,7 @@ def _cross_field(features: dict[str, Any]) -> list[Issue]:
     if suburb in BY_SUBURB and postcode is not None:
         expected = BY_SUBURB[suburb]["POSTCODE"]
         if str(postcode) != str(expected):
-            issues.append(
-                Issue("POSTCODE", f"{postcode} is not the postcode for {suburb} ({expected}).")
-            )
+            issues.append(Issue("POSTCODE", f"{postcode} is not the postcode for {suburb} ({expected})."))
 
     return issues
 
