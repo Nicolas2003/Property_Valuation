@@ -131,6 +131,12 @@ pipeline {
     }
     stage('Monitoring and Alerting'){
         when {branch 'main'}
+        agent {
+            docker {
+              image 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
+              reuseNode true
+            }
+        }
         environment {
             APP_HEALTH_URL = 'https://houses.kmaster.app/_stcore/health'
             UPTIME_CHECK_ID = '9eb1ff0c-fc8b-464f-8f59-0ce9f1821faa'
