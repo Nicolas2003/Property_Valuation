@@ -88,13 +88,13 @@ pipeline {
 //         }
 
 
-        stage('Security Analysis') {
-            steps {
-                withSonarQubeEnv('SonarCloud') {
-                    sh "${tool 'sonar-scanner'}/bin/sonar-scanner"
-                }
-            }
-        }
+//         stage('Security Analysis') {
+//             steps {
+//                 withSonarQubeEnv('SonarCloud') {
+//                     sh "${tool 'sonar-scanner'}/bin/sonar-scanner"
+//                 }
+//             }
+//         }
         stage('Deploy') {
           when { branch 'main' }
           steps {

@@ -65,52 +65,73 @@ def build_preprocessor(frame: pd.DataFrame) -> ColumnTransformer:
         include=["string", "category", "object"]
     ).columns.drop(EXCLUDE_CATEGORICAL, errors="ignore")
 
-    numerical_transformer = Pipeline([
-        ("imputer", SimpleImputer(strategy="median", add_indicator=True)),
-        ("scaler", StandardScaler()),
-    ])
+    numerical_transformer = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="median", add_indicator=True)),
+            ("scaler", StandardScaler()),
+        ]
+    )
 
-    categorical_transformer = Pipeline([
-        ("imputer", SimpleImputer(strategy="most_frequent")),
-        ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
-    ])
+    categorical_transformer = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
+        ]
+    )
 
-    multi_transformer = Pipeline([
-        ("imputer", SimpleImputer(strategy="most_frequent")),
-        ("encoder", MultiHotEncoder(seperator=";")),
-    ])
+    multi_transformer = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("encoder", MultiHotEncoder(seperator=";")),
+        ]
+    )
 
-    risk_transformer = Pipeline([
-        ("imputer", SimpleImputer(strategy="most_frequent")),
-        ("encoder", OrdinalEncoder(categories=[RISK_LEVELS] * len(RISK_FEATURES))),
-    ])
+    risk_transformer = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("encoder", OrdinalEncoder(categories=[RISK_LEVELS] * len(RISK_FEATURES))),
+        ]
+    )
 
-    return ColumnTransformer([
-        ("numerical", numerical_transformer, numerical_features),
-        ("categorical", categorical_transformer, categorical_features),
-        ("multi_categorical", multi_transformer, [MULTI_FEATURE]),
-        ("risk", risk_transformer, RISK_FEATURES),
-    ])
+    return ColumnTransformer(
+        [
+            ("numerical", numerical_transformer, numerical_features),
+            ("categorical", categorical_transformer, categorical_features),
+            ("multi_categorical", multi_transformer, [MULTI_FEATURE]),
+            ("risk", risk_transformer, RISK_FEATURES),
+        ]
+    )
 
 
 def train_random_forest(train_inputs, train_outputs):
-    model = Pipeline([
-        ("preprocessor", build_preprocessor(train_inputs)),
-        ("regressor", RandomForestRegressor(
-            n_estimators=500, max_depth=3, max_features=0.5,
-            min_samples_leaf=2, min_samples_split=2, random_state=42,
-        )),
-    ])
+    model = Pipeline(
+        [
+            ("preprocessor", build_preprocessor(train_inputs)),
+            (
+                "regressor",
+                RandomForestRegressor(
+                    n_estimators=500,
+                    max_depth=3,
+                    max_features=0.5,
+                    min_samples_leaf=2,
+                    min_samples_split=2,
+                    random_state=42,
+                ),
+            ),
+        ]
+    )
     model.fit(train_inputs, train_outputs)
     return model
 
 
 def train_svm(train_inputs, train_outputs):
-    pipeline = Pipeline([
-        ("preprocessor", build_preprocessor(train_inputs)),
-        ("scaler", StandardScaler()),
-        ("regressor", SVR(kernel="poly", C=1, degree=2, epsilon=0.1, gamma="scale")),
-    ])
+    pipeline = Pipeline(
+        [
+            ("preprocessor", build_preprocessor(train_inputs)),
+            ("scaler", StandardScaler()),
+            ("regressor", SVR(kernel="poly", C=1, degree=2, epsilon=0.1, gamma="scale")),
+        ]
+    )
     model = TransformedTargetRegressor(regressor=pipeline, transformer=StandardScaler())
     model.fit(train_inputs, train_outputs)
     return model
@@ -118,16 +139,23 @@ def train_svm(train_inputs, train_outputs):
 
 def train_gradient_boost(train_inputs, train_outputs):
     preprocessor = build_preprocessor(train_inputs)
-    preprocessor.set_params(
-        numerical__imputer__strategy="mean"
+    preprocessor.set_params(numerical__imputer__strategy="mean")
+    model = Pipeline(
+        [
+            ("preprocessor", preprocessor),
+            (
+                "regressor",
+                GradientBoostingRegressor(
+                    learning_rate=0.3,
+                    max_depth=7,
+                    min_samples_leaf=2,
+                    min_samples_split=10,
+                    n_estimators=400,
+                    random_state=42,
+                ),
+            ),
+        ]
     )
-    model = Pipeline([
-        ("preprocessor", preprocessor),
-        ("regressor", GradientBoostingRegressor(
-            learning_rate=0.3, max_depth=7, min_samples_leaf=2,
-            min_samples_split=10, n_estimators=400, random_state=42,
-        )),
-    ])
     model.fit(train_inputs, train_outputs)
     return model
 

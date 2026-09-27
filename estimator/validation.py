@@ -88,9 +88,7 @@ def parse(spec: FeatureSpec, raw: Any) -> tuple[Any, Issue | None]:
     if spec.kind == "category":
         match = _match_choice(spec, text)
         if match is None:
-            return None, Issue(
-                spec.name, f"`{text}` is not one of: {', '.join(spec.choices)}"
-            )
+            return None, Issue(spec.name, f"`{text}` is not one of: {', '.join(spec.choices)}")
         if spec.name in NUMERIC_CATEGORIES:
             return float(match), None
         return match, None
@@ -116,15 +114,10 @@ def parse(spec: FeatureSpec, raw: Any) -> tuple[Any, Issue | None]:
             if not _parses_as(spec.kind, token):
                 bad.append(token)
         if bad:
-            what = (
-                "a date in YYYY-MM-DD form"
-                if spec.kind == "date_list"
-                else "a finite number"
-            )
+            what = "a date in YYYY-MM-DD form" if spec.kind == "date_list" else "a finite number"
             return None, Issue(
                 spec.name,
-                f"{_quoted(bad)} is not {what}. "
-                "Separate each prior sale with `;`.",
+                f"{_quoted(bad)} is not {what}. Separate each prior sale with `;`.",
             )
         return ";".join(tokens), None
 
@@ -302,9 +295,7 @@ def _cross_field(features: dict[str, Any]) -> list[Issue]:
 
     built, renovated = features.get("BUILT_YEAR"), features.get("RENOVATION_YEAR")
     if built is not None and renovated is not None and renovated < built:
-        issues.append(
-            Issue("RENOVATION_YEAR", f"{renovated} is before the build year ({built}).")
-        )
+        issues.append(Issue("RENOVATION_YEAR", f"{renovated} is before the build year ({built})."))
 
     suburb, postcode = features.get("SUBURB"), features.get("POSTCODE")
     if suburb in BY_SUBURB and postcode is not None:

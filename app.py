@@ -70,7 +70,9 @@ def load_upload(upload) -> None:
     for name, value in upload.features.items():
         spec = BY_NAME[name]
         if value is None:
-            set_raw(name, [] if spec.kind == "multiselect" else ("" if spec.kind != "binary" else False))
+            set_raw(
+                name, [] if spec.kind == "multiselect" else ("" if spec.kind != "binary" else False)
+            )
         elif spec.kind == "binary":
             set_raw(name, bool(value))
         elif spec.kind == "tristate":
@@ -192,7 +194,9 @@ with st.sidebar:
             for error in result.report.errors:
                 st.error(str(error))
     st.divider()
-    st.caption("Samples: `data/sample_property.csv` (one row), `data/the_sold_properties_V2.csv` (150 rows)")
+    st.caption(
+        "Samples: `data/sample_property.csv` (one row), `data/the_sold_properties_V2.csv` (150 rows)"
+    )
 
 st.subheader("Where and what")
 lead = st.columns(len(LEADING))
@@ -273,4 +277,6 @@ if submitted:
         left.metric("Actual sale price (from CSV)", f"${actual:,.0f}")
         if priced:
             error_pct = (sum(priced) / len(priced) - actual) / actual * 100
-            right.metric("Mean estimate", f"${sum(priced) / len(priced):,.0f}", f"{error_pct:+.1f}%")
+            right.metric(
+                "Mean estimate", f"${sum(priced) / len(priced):,.0f}", f"{error_pct:+.1f}%"
+            )

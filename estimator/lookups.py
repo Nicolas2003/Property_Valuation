@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 BY_SUBURB_TYPE: dict[tuple[str, str], dict[str, float]] = {
-    ('Campbelltown', 'Apartment'): {
+    ("Campbelltown", "Apartment"): {
         "SUBURB_MEAN_PRICE": 550000,
         "MEAN_PRICE_AREA": 689000,
         "SUBURB_PRICE_GROWTH": 9.0418,
@@ -15,7 +15,7 @@ BY_SUBURB_TYPE: dict[tuple[str, str], dict[str, float]] = {
         "HISTORICAL_CAPITAL_GROWTH": 32.2838,
         "AIR_QUALITY": 13.52,
     },
-    ('Campbelltown', 'House'): {
+    ("Campbelltown", "House"): {
         "SUBURB_MEAN_PRICE": 1018500,
         "MEAN_PRICE_AREA": 1088000,
         "SUBURB_PRICE_GROWTH": 6.9629,
@@ -27,7 +27,7 @@ BY_SUBURB_TYPE: dict[tuple[str, str], dict[str, float]] = {
         "HISTORICAL_CAPITAL_GROWTH": 65.221,
         "AIR_QUALITY": 13.52,
     },
-    ('Campbelltown', 'Townhouse'): {
+    ("Campbelltown", "Townhouse"): {
         "SUBURB_MEAN_PRICE": 590000,
         "MEAN_PRICE_AREA": 689000,
         "SUBURB_PRICE_GROWTH": 9.0418,
@@ -39,7 +39,7 @@ BY_SUBURB_TYPE: dict[tuple[str, str], dict[str, float]] = {
         "HISTORICAL_CAPITAL_GROWTH": 32.2838,
         "AIR_QUALITY": 13.52,
     },
-    ('Campbelltown', 'Unit'): {
+    ("Campbelltown", "Unit"): {
         "SUBURB_MEAN_PRICE": 590000,
         "MEAN_PRICE_AREA": 689000,
         "SUBURB_PRICE_GROWTH": 9.0418,
@@ -51,7 +51,7 @@ BY_SUBURB_TYPE: dict[tuple[str, str], dict[str, float]] = {
         "HISTORICAL_CAPITAL_GROWTH": 32.2838,
         "AIR_QUALITY": 13.52,
     },
-    ('Mosman', 'Apartment'): {
+    ("Mosman", "Apartment"): {
         "SUBURB_MEAN_PRICE": 1480000,
         "MEAN_PRICE_AREA": 1463000,
         "SUBURB_PRICE_GROWTH": 1.1957,
@@ -63,7 +63,7 @@ BY_SUBURB_TYPE: dict[tuple[str, str], dict[str, float]] = {
         "HISTORICAL_CAPITAL_GROWTH": 38.0136,
         "AIR_QUALITY": 11.46,
     },
-    ('Mosman', 'House'): {
+    ("Mosman", "House"): {
         "SUBURB_MEAN_PRICE": 5842500,
         "MEAN_PRICE_AREA": 6126000,
         "SUBURB_PRICE_GROWTH": 5.8584,
@@ -75,7 +75,7 @@ BY_SUBURB_TYPE: dict[tuple[str, str], dict[str, float]] = {
         "HISTORICAL_CAPITAL_GROWTH": 61.6275,
         "AIR_QUALITY": 11.46,
     },
-    ('Mosman', 'Townhouse'): {
+    ("Mosman", "Townhouse"): {
         "SUBURB_MEAN_PRICE": 1480000,
         "MEAN_PRICE_AREA": 1463000,
         "SUBURB_PRICE_GROWTH": 1.1957,
@@ -87,7 +87,7 @@ BY_SUBURB_TYPE: dict[tuple[str, str], dict[str, float]] = {
         "HISTORICAL_CAPITAL_GROWTH": 38.0136,
         "AIR_QUALITY": 11.46,
     },
-    ('Mosman', 'Unit'): {
+    ("Mosman", "Unit"): {
         "SUBURB_MEAN_PRICE": 1480000,
         "MEAN_PRICE_AREA": 1463000,
         "SUBURB_PRICE_GROWTH": 1.1957,
@@ -99,7 +99,7 @@ BY_SUBURB_TYPE: dict[tuple[str, str], dict[str, float]] = {
         "HISTORICAL_CAPITAL_GROWTH": 38.0136,
         "AIR_QUALITY": 11.46,
     },
-    ('Parramatta', 'Apartment'): {
+    ("Parramatta", "Apartment"): {
         "SUBURB_MEAN_PRICE": 623000,
         "MEAN_PRICE_AREA": 748000,
         "SUBURB_PRICE_GROWTH": 2.6756,
@@ -111,7 +111,7 @@ BY_SUBURB_TYPE: dict[tuple[str, str], dict[str, float]] = {
         "HISTORICAL_CAPITAL_GROWTH": 5.9591,
         "AIR_QUALITY": 11.46,
     },
-    ('Parramatta', 'House'): {
+    ("Parramatta", "House"): {
         "SUBURB_MEAN_PRICE": 1610000,
         "MEAN_PRICE_AREA": 1977000,
         "SUBURB_PRICE_GROWTH": -6.0132,
@@ -123,7 +123,7 @@ BY_SUBURB_TYPE: dict[tuple[str, str], dict[str, float]] = {
         "HISTORICAL_CAPITAL_GROWTH": 43.1776,
         "AIR_QUALITY": 13.52,
     },
-    ('Parramatta', 'Townhouse'): {
+    ("Parramatta", "Townhouse"): {
         "SUBURB_MEAN_PRICE": 623000,
         "MEAN_PRICE_AREA": 748000,
         "SUBURB_PRICE_GROWTH": 2.6756,
@@ -135,7 +135,7 @@ BY_SUBURB_TYPE: dict[tuple[str, str], dict[str, float]] = {
         "HISTORICAL_CAPITAL_GROWTH": 5.9591,
         "AIR_QUALITY": 13.52,
     },
-    ('Parramatta', 'Unit'): {
+    ("Parramatta", "Unit"): {
         "SUBURB_MEAN_PRICE": 623000,
         "MEAN_PRICE_AREA": 748000,
         "SUBURB_PRICE_GROWTH": 2.6756,

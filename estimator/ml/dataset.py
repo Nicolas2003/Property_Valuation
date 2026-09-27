@@ -151,9 +151,7 @@ def load() -> pd.DataFrame:
 
 def _history_row(row: pd.Series) -> pd.Series:
     return pd.Series(
-        computed_features(
-            row["PREV_SALE_DATE"], row["PREV_SALE_PRICE"], row.get("SALE_DATE")
-        )
+        computed_features(row["PREV_SALE_DATE"], row["PREV_SALE_PRICE"], row.get("SALE_DATE"))
     )
 
 
