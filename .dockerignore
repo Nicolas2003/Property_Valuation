@@ -1,0 +1,14 @@
+.git
+.venv
+__pycache__/
+.ruff_cache/
+.pytest_cache/
+.scannerwork/
+.coverage
+coverage.xml
+.context/
+.kamal/
+.env
+doc/
+tests/
+scripts/

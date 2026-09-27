@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import io
+
 import pytest
 
-from estimator.csv_input import list_rows, read_csv, row_label
+from estimator.csv_input import list_rows, read_csv, read_row, row_label
 
 SOLD = "data/the_sold_properties_V2.csv"
 
@@ -60,3 +62,51 @@ def test_every_sold_property_loads():
             upload = read_csv(fh, row=index)
         assert upload.ok, (index, [str(e) for e in upload.report.errors])
         assert upload.actual_price
+
+
+def test_read_csv_passes_on_an_empty_file_error():
+    upload = read_csv("SUBURB,LAND_SIZE\n")
+
+    assert not upload.ok
+    assert upload.features == {}
+    assert "no data row" in str(upload.report.errors[0])
+
+
+def test_read_csv_accepts_bytes_with_a_bom():
+    upload = read_csv(("\ufeff" + TWO_ROWS).encode())
+
+    assert upload.features["LAND_SIZE"] == pytest.approx(1407.0)
+
+
+def test_read_csv_accepts_a_text_stream():
+    upload = read_csv(io.StringIO(TWO_ROWS))
+
+    assert upload.features["LAND_SIZE"] == pytest.approx(1407.0)
+
+
+def test_missing_sale_price_is_not_a_warning():
+    upload = read_csv("SUBURB,LAND_SIZE\nMosman,717\n")
+
+    assert upload.actual_price is None
+    assert upload.report.warnings == []
+
+
+def test_non_numeric_sale_price_is_a_warning():
+    upload = read_csv("SUBURB,LAND_SIZE,SALE_PRICE\nMosman,717,n/a\n")
+
+    assert upload.actual_price is None
+    assert "`n/a` is not a number" in str(upload.report.warnings[-1])
+
+
+def test_read_row_reports_unknown_columns_and_counts_recognised_ones():
+    upload = read_row({"NOTES": "x", "SUBURB": "Mosman", "LAND_SIZE": "717", "SALE_PRICE": "1"})
+
+    assert upload.unknown_columns == ["NOTES"]
+    assert upload.recognised == 2
+
+
+def test_list_rows_strips_header_whitespace_and_drops_extra_values():
+    rows, report = list_rows(" SUBURB , LAND_SIZE\nMosman,717,extra\n")
+
+    assert report.ok
+    assert rows == [{"SUBURB": "Mosman", "LAND_SIZE": "717"}]
