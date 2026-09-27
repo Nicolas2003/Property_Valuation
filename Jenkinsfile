@@ -7,6 +7,10 @@ pipeline {
     HEALTH_PATH    = '/_stcore/health'
   }
 
+  options {
+    disableConcurrentBuilds()
+  }
+
   triggers {
     pollSCM('* * * * *')
   }
