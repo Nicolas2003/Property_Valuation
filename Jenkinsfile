@@ -49,6 +49,14 @@ pipeline {
       }
     }
 
+    stage('Security Analysis') {
+      steps {
+        withSonarQubeEnv('SonarCloud') {
+          sh "${tool 'sonar-scanner'}/bin/sonar-scanner"
+        }
+      }
+    }
+
     // Kamal requires each image to carry its own service label, so the staging and production
     // images are derived from one build with a label-only layer. Their filesystems are identical.
     stage('Build and push image') {
