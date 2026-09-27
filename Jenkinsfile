@@ -129,5 +129,82 @@ pipeline {
         sh 'curl -fsS --retry 10 --retry-delay 3 --retry-all-errors "$PRODUCTION_URL$HEALTH_PATH"'
       }
     }
+    stage('Monitoring and Alerting'){
+        when {branch 'main'}
+        environment {
+            APP_HEALTH_URL = 'https://houses.kmaster.app/_stcore/health'
+            UPTIME_CHECK_ID = '9eb1ff0c-fc8b-464f-8f59-0ce9f1821faa'
+        }
+        steps {
+            withCredentials([
+                string(
+                    credentialsId: 'digital-ocean-monitoring-token',
+                    variable: 'DO_TOKEN'
+                )
+            ]) {
+                sh '''
+                    set +x
+                    set -eu
+
+                    echo "Checking production monitoring..."
+
+                    curl -fsS --max-time 20 "$APP_HEALTH_URL" > /dev/null
+
+                    echo "Retrieving DigitalOcean monitoring status..."
+
+                    python3 - <<'PY'
+    import os
+    import json
+    import urllib.request
+
+    check_id = os.environ["UPTIME_CHECK_ID"]
+    token = os.environ["DO_TOKEN"]
+
+    base = f"https://api.digitalocean.com/v2/uptime/checks/{check_id}"
+
+    def get_api(path):
+        request = urllib.request.Request(
+            f"{base}/{path}",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return json.load(response)
+
+
+    state = get_api("state").get("state", {})
+    regions = state.get("regions", {})
+
+    statuses = {}
+    for region, details in regions.items():
+        statuses[region] = details.get("status")
+
+    print("Uptime status:", statuses)
+
+    if not statuses or any(status != "UP" for status in statuses.values()):
+        raise SystemExit("Production monitoring reports an unhealthy or unknown state")
+
+
+    alerts = get_api("alerts?per_page=200").get("alerts", [])
+
+    downtime_alerts = [
+        alert for alert in alerts
+        if alert.get("type") in ("down", "down_global")
+        and (
+            alert.get("notifications", {}).get("email")
+            or alert.get("notifications", {}).get("slack")
+        )
+    ]
+
+    if not downtime_alerts:
+        raise SystemExit("No downtime alert with notification recipients configured")
+
+    print("Production application is healthy")
+    print("Downtime alert configuration verified")
+    PY
+                '''
+            }
+        }
+    }
   }
 }
