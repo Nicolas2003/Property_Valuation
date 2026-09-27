@@ -111,7 +111,7 @@ def widget(spec: FeatureSpec) -> None:
     elif spec.kind == "tristate":
         st.selectbox(label, TRISTATE, **args)
     elif spec.kind == "category":
-        options = [BLANK, spec.choices]
+        options = [BLANK, *spec.choices]
         fmt = garage_label if spec.name == "GARAGE_AREA" else plain_label
         st.selectbox(label, options, format_func=fmt, **args)
     elif spec.kind == "multiselect":
