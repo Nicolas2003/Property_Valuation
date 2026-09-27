@@ -200,7 +200,7 @@ with st.sidebar:
 
 st.subheader("Where and what")
 lead = st.columns(len(LEADING))
-for column, name in zip(lead, LEADING):
+for column, name in zip(lead, LEADING, strict=True):
     with column:
         widget(BY_NAME[name])
 apply_autofill()
@@ -248,7 +248,7 @@ if submitted:
 
     st.subheader("Estimates")
     columns = st.columns(len(ESTIMATORS))
-    for column, method in zip(columns, ESTIMATORS):
+    for column, method in zip(columns, ESTIMATORS, strict=True):
         with column:
             result = method.estimate(features)
             st.caption(method.blurb)
