@@ -44,7 +44,7 @@ pipeline {
       steps {
         sh '''
           uv sync --locked
-          uv run pytest -v --cov=estimator --cov=app --cov-report=xml
+          uv run pytest -v --cov=estimator --cov=app --cov=scripts --cov-report=xml
         '''
       }
     }
