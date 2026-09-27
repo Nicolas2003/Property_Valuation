@@ -32,7 +32,7 @@ def test_read_csv_rejects_a_row_outside_the_file(row):
 
     assert not upload.ok
     assert f"row index {row}" in str(upload.report.errors[0])
-    assert "#1–#2" in str(upload.report.errors[0])
+    assert "#1-#2" in str(upload.report.errors[0])
 
 
 def test_empty_file_is_an_error():

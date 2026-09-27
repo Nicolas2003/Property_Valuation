@@ -164,7 +164,7 @@ def range_warning(spec: FeatureSpec, value: Any) -> Issue | None:
     return Issue(
         spec.name,
         f"{value:,g}{unit} is outside the range seen in the dataset "
-        f"({spec.lo:,g}–{spec.hi:,g}{unit}). Estimating anyway.",
+        f"({spec.lo:,g}-{spec.hi:,g}{unit}). Estimating anyway.",
     )
 
 

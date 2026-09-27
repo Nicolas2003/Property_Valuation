@@ -259,7 +259,7 @@ if submitted:
             st.metric(
                 method.label,
                 f"${result.price:,.0f}",
-                delta=f"${result.low:,.0f} – ${result.high:,.0f}" if result.has_range else None,
+                delta=f"${result.low:,.0f} - ${result.high:,.0f}" if result.has_range else None,
                 delta_color="off",
             )
             if result.notes:
