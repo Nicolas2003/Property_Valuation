@@ -13,6 +13,7 @@ The app is deployed with [Kamal](https://kamal-deploy.org) to a DigitalOcean dro
 | Image | `ghcr.io/rpazevedo/house-price-estimator` (private GHCR package) |
 | Container port | `8501` (Streamlit) |
 | Healthcheck | `GET /_stcore/health` → `ok` |
+| Database | `property_valuation`, user `property_valuation` (staging: `property_valuation_staging`, user `property_valuation_staging`), on the DigitalOcean Managed PostgreSQL cluster |
 
 ### A shared server
 
@@ -65,17 +66,24 @@ This has four consequences:
   `.kamal/secrets-common` reads the token from the environment; never commit it. Kamal also logs the
   droplet in to ghcr.io with it, so the token is stored in `root`'s `~/.docker/config.json` on the
   server. Every deploy logs in again, so after rotating the token just load the new one and deploy.
+- The database users' passwords (see [One-time setup: database](#one-time-setup-database)), in
+  `.env` or exported as `PROPERTY_VALUATION_DB_PASSWORD` (production) and
+  `PROPERTY_VALUATION_STAGING_DB_PASSWORD` (staging). `.kamal/secrets` and `.kamal/secrets.staging`
+  pass them to the containers as `PGPASSWORD`. Each deploy only needs its own environment's.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `Dockerfile` | Production image: `python:3.13-slim` + `uv sync --frozen --no-dev`, runs Streamlit on `0.0.0.0:8501` as a non-root user. |
+| `Dockerfile` | Production image: `python:3.13-slim` + `uv sync --frozen --no-dev`. Applies database migrations (`python -m db`), then runs Streamlit on `0.0.0.0:8501` as a non-root user. |
 | `.dockerignore` | Keeps tests, scripts, docs, `.venv`, `.git`, CI output and local secrets out of the build context. |
-| `config/deploy.yml` | Kamal config: server, proxy host, app port, healthcheck, registry, builder arch. |
-| `config/deploy.staging.yml` | Staging overrides (`kamal deploy -d staging`): its own service, image and host. |
+| `config/deploy.yml` | Kamal config: server, proxy host, app port, healthcheck, registry, builder arch, database. |
+| `config/deploy.staging.yml` | Staging overrides (`kamal deploy -d staging`): its own service, image, host, database and database user. |
 | `.kamal/secrets-common` | Secrets passed to Kamal for every destination. Only `KAMAL_REGISTRY_PASSWORD` (the GHCR token), read from your environment. |
-| `.env.example` | Template for a local, gitignored `.env` holding the token. |
+| `.kamal/secrets` | Production-only secrets (read without `-d`): `PGPASSWORD` from `PROPERTY_VALUATION_DB_PASSWORD`. |
+| `.kamal/secrets.staging` | Staging-only secrets (read with `-d staging`): `PGPASSWORD` from `PROPERTY_VALUATION_STAGING_DB_PASSWORD`. |
+| `bin/setup-database` | One-time creation of an environment's database and user on the cluster (see [database](#one-time-setup-database)). |
+| `.env.example` | Template for a local, gitignored `.env` holding the token and database passwords. |
 
 Key settings in `config/deploy.yml`:
 
@@ -91,6 +99,8 @@ Key settings in `config/deploy.yml`:
   `org.opencontainers.image.source` label links the package to the GitHub repo.
 - **`builder.arch: amd64`**: the droplet is x86_64, so the image is built for amd64 even on
   Apple Silicon.
+- **`env.clear.PG*` and `env.secret: PGPASSWORD`**: the standard libpq variables, which psycopg
+  reads directly. `PGSSLMODE: require` because DigitalOcean only accepts TLS connections.
 
 Key lines in the `Dockerfile`:
 
@@ -154,19 +164,73 @@ cache the "does not exist" answer for up to 30 minutes. Wait it out or flush the
 sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
 ```
 
+## One-time setup: database
+
+Each environment keeps its accounts in its own database on the DigitalOcean Managed PostgreSQL
+cluster (`db-postgresql-syd1-66096-do-user-7536526-0.h.db.ondigitalocean.com:25060`) and connects
+as its own user, not as `doadmin`, so neither can touch the other's data or the other databases on
+the cluster:
+
+| Environment | Database and user | Password env var | Jenkins credential |
+|---|---|---|---|
+| Production | `property_valuation` | `PROPERTY_VALUATION_DB_PASSWORD` | `property-valuation-db-password` |
+| Staging | `property_valuation_staging` | `PROPERTY_VALUATION_STAGING_DB_PASSWORD` | `property-valuation-staging-db-password` |
+
+Tables come from [migrations](../README.md#schema-changes), which each container applies on every
+start, so the only one-time step is creating the database and the user:
+
+```sh
+doctl auth init              # once, with a DigitalOcean API token (read + write on databases)
+bin/setup-database           # production
+bin/setup-database staging   # staging
+```
+
+[`bin/setup-database`](../bin/setup-database) reads the host, database and user from the Kamal
+config, finds the cluster with `doctl`, and:
+
+1. creates the user and the database, unless they exist;
+2. as `doadmin`, grants the user `CREATE` on the `public` schema and `CONNECT` on the database, and
+   revokes `CONNECT` from everyone else. psql runs on the droplet (over SSH, in a `postgres`
+   container) because the droplet is already a trusted source of the cluster;
+3. warns if the cluster's PostgreSQL major version differs from the `postgres` image the
+   Jenkinsfile tests against;
+4. prints the user's password: save it in `.env` and as the Jenkins credential (Secret text, in the
+   pipeline's own store).
+
+It's safe to re-run, e.g. to see a password again.
+
+### Managing accounts
+
+There is no admin screen. To list or remove accounts, connect from the droplet with the `doadmin`
+connection string from the cluster's **Overview → Connection details**:
+
+```sh
+ssh root@209.38.93.10
+docker run --rm -it postgres:17 psql 'postgresql://doadmin:...@db-postgresql-syd1-66096-do-user-7536526-0.h.db.ondigitalocean.com:25060/property_valuation?sslmode=require'
+```
+
+```sql
+SELECT username, created_at FROM users ORDER BY created_at;
+DELETE FROM users WHERE username = 'someone';
+```
+
+Deleting an account doesn't end a session that's already logged in; it ends when that browser tab
+is closed or refreshed.
+
 ## First deploy
 
 ```sh
-# 1. Check the image builds and serves locally
+# 1. Check the image builds and serves locally, against your local PostgreSQL
 docker build --platform linux/amd64 -t house-price-estimator .
-docker run --rm -p 8501:8501 house-price-estimator
+docker run --rm -p 8501:8501 -e PGHOST=host.docker.internal -e PGUSER=$USER house-price-estimator
 curl localhost:8501/_stcore/health          # → ok  (then Ctrl-C the container)
 
 # 2. Check the Kamal config parses
 kamal config
 
-# 3. Check DNS (see above)
+# 3. Check DNS and set up the database (see above)
 dig @ns1.digitalocean.com +short houses.kmaster.app
+bin/setup-database
 
 # 4. Deploy
 kamal setup
@@ -205,13 +269,18 @@ kamal deploy -d staging
 ```
 
 Every other command takes `-d staging` too, e.g. `kamal logs -d staging`. The first deploy needs
-the `houses-staging` A record (see [One-time setup: DNS](#one-time-setup-dns)).
+the `houses-staging` A record (see [One-time setup: DNS](#one-time-setup-dns)) and its database
+(`bin/setup-database staging`, see [database](#one-time-setup-database)).
 
 On `main`, Jenkins builds the image once and pushes it to GHCR under both services' images,
 tagged with the commit SHA. The two differ only in their `service` label, which Kamal checks on
 pull. It then deploys to staging with `--skip-push`, smoke-tests `/_stcore/health`, and deploys the
 same image to production the same way. A failing staging deploy or smoke test stops the pipeline
-before production.
+before production. Each deploy stage gets only its own environment's database password.
+
+The `Tests` stage starts a throwaway `postgres:17` container, waits up to 2 minutes for it to
+accept connections (printing its logs and failing if it doesn't), and runs `pytest` in the uv image
+linked to it (`PGHOST=postgres`).
 
 ## Operations
 
@@ -241,8 +310,9 @@ partway, after this app is already gone.
 After each deploy:
 
 - [ ] `curl -I https://houses.kmaster.app` returns `200` with a valid certificate.
-- [ ] Open https://houses.kmaster.app, load `data/sample_property.csv` from the sidebar and press
-      **Estimate price**. All four cards should show a price. This proves the models load and the
+- [ ] Open https://houses.kmaster.app: the **Log in** / **Sign up** tabs show. Log in (or sign
+      up), load `data/sample_property.csv` from the sidebar and press **Estimate price**. All four
+      cards should show a price. This proves the app reaches the database, the models load and the
       Streamlit websocket works through kamal-proxy.
 - [ ] The other hosts on the droplet still respond.
 - [ ] `kamal app details` shows the container running.
@@ -253,8 +323,17 @@ After each deploy:
   Encrypt checked. Confirm with `dig @ns1.digitalocean.com houses.kmaster.app`, then run
   `kamal deploy` again. kamal-proxy retries issuance on new requests.
 - **Deploy fails with "target failed to become healthy":** the container didn't answer
-  `/_stcore/health` on port 8501 in time. Check `kamal logs`, and make sure Streamlit binds to
-  `0.0.0.0:8501` (set in the Dockerfile `CMD`).
+  `/_stcore/health` on port 8501 in time. Check `kamal logs`. A `psycopg.OperationalError` means
+  `python -m db` couldn't reach the database, so Streamlit never started (see the next item). Any
+  other traceback from `db.py` is a failing migration: it was rolled back, so fix it and deploy
+  again. Otherwise make sure Streamlit binds to `0.0.0.0:8501` (set in the Dockerfile `CMD`).
+- **`password authentication failed for user "property_valuation"`** (or
+  `"property_valuation_staging"`): the password env var or its Jenkins credential is missing or
+  wrong. **`connection timeout`:** the droplet isn't in the cluster's Trusted sources.
+  **`permission denied for schema public`:** the grants weren't applied; re-run
+  `bin/setup-database` (or `bin/setup-database staging`).
+- **`Secret 'PGPASSWORD' not found`:** the environment's own secrets file (`.kamal/secrets` or
+  `.kamal/secrets.staging`) is missing its `PGPASSWORD` line.
 - **Page loads but hangs on "Please wait…" / keeps reconnecting:** the websocket
   (`/_stcore/stream`) is failing. kamal-proxy supports websockets by default. Check the browser
   console and `kamal logs` for XSRF/CORS errors.

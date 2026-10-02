@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# Creates an environment's database and user on the DigitalOcean Managed PostgreSQL cluster and lets
+# the user create tables in it. Safe to re-run. Tables come from migrations when the app starts.
+#
+#   bin/setup-database           production (config/deploy.yml, .kamal/secrets)
+#   bin/setup-database staging   staging (config/deploy.staging.yml over deploy.yml, .kamal/secrets.staging)
+#
+# Needs doctl logged in (doctl auth init), jq, and SSH access as root to the droplet, which runs the
+# grants because it's already a trusted source of the cluster.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+die() {
+  echo "error: $*" >&2
+  exit 1
+}
+
+destination=${1:-}
+configs=(config/deploy.yml)
+secrets=.kamal/secrets
+if [[ -n $destination ]]; then
+  [[ -f config/deploy.$destination.yml ]] || die "no config/deploy.$destination.yml"
+  configs=("config/deploy.$destination.yml" config/deploy.yml)
+  secrets=.kamal/secrets.$destination
+fi
+
+setting() { sed -n "/^ *$1: */{s///p;q;}" "${configs[@]}"; }
+host=$(setting PGHOST)
+database=$(setting PGDATABASE)
+user=$(setting PGUSER)
+server=$(sed -n '/^servers:/,/^[^ #]/{/^ *- *[0-9.]* *$/{s/^ *- *\([0-9.]*\) *$/\1/p;q;};}' config/deploy.yml)
+ci_major=$(sed -n "s/.*docker\.image('postgres:\([0-9]*\)').*/\1/p" Jenkinsfile)
+[[ -n $host && -n $database && -n $user && -n $server ]] ||
+  die "couldn't read PGHOST, PGDATABASE, PGUSER and the server from ${configs[*]}"
+
+# PROPERTY_VALUATION_DB_PASSWORD -> Jenkins credential property-valuation-db-password
+password_var=$(sed -n 's/^PGPASSWORD=\$//p' "$secrets" 2>/dev/null || true)
+[[ -n $password_var ]] || die "$secrets doesn't set PGPASSWORD=\$SOME_ENV_VAR"
+credential=$(tr 'A-Z_' 'a-z-' <<<"$password_var")
+
+command -v doctl >/dev/null || die "doctl isn't installed (brew install doctl)"
+command -v jq >/dev/null || die "jq isn't installed (brew install jq)"
+doctl account get >/dev/null 2>&1 || die "doctl isn't logged in: run doctl auth init"
+
+# doctl prints single objects as one-element arrays in JSON.
+first='if type == "array" then .[0] else . end'
+
+cluster=$(doctl databases list -o json |
+  jq -r --arg host "$host" '.[] | select(.connection.host == $host) | .id')
+[[ -n $cluster ]] || die "no database cluster with host $host in this DigitalOcean account"
+cluster_json=$(doctl databases get "$cluster" -o json | jq "$first")
+major=$(jq -r '.version' <<<"$cluster_json")
+echo "Cluster $(jq -r '.name' <<<"$cluster_json") ($cluster), PostgreSQL $major"
+
+if doctl databases user get "$cluster" "$user" >/dev/null 2>&1; then
+  echo "User $user already exists"
+else
+  doctl databases user create "$cluster" "$user" >/dev/null
+  echo "Created user $user"
+fi
+password=$(doctl databases user get "$cluster" "$user" -o json | jq -r "$first | .password")
+
+if doctl databases db get "$cluster" "$database" >/dev/null 2>&1; then
+  echo "Database $database already exists"
+else
+  doctl databases db create "$cluster" "$database" >/dev/null
+  echo "Created database $database"
+fi
+
+# doadmin owns the database, and since PostgreSQL 15 other users can't create tables in public.
+# The admin connection string goes over stdin, not on a command line.
+admin_uri=$(jq -r --arg db "$database" '.connection |
+  "postgresql://\(.user):\(.password | @uri)@\(.host):\(.port)/\($db)?sslmode=require"' \
+  <<<"$cluster_json")
+{
+  printf '%s\n' "$admin_uri"
+  cat <<SQL
+GRANT ALL ON SCHEMA public TO $user;
+REVOKE CONNECT ON DATABASE $database FROM PUBLIC;
+GRANT CONNECT ON DATABASE $database TO $user;
+SQL
+} | ssh "root@$server" \
+  "docker run --rm -i -q postgres:$major sh -c 'read -r uri && exec psql \"\$uri\" -q -v ON_ERROR_STOP=1'"
+echo "Granted $user access to $database"
+
+if [[ $major != "$ci_major" ]]; then
+  echo
+  echo "warning: the cluster runs PostgreSQL $major but CI tests against postgres:$ci_major." \
+    "Change the image tag in the Jenkinsfile's Tests stage to postgres:$major." >&2
+fi
+
+cat <<EOF2
+
+Done. Save the password of the $user user in both places:
+  .env                  $password_var=$password
+  Jenkins credentials   $credential (Secret text)
+EOF2
