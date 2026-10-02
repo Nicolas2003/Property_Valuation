@@ -5,3 +5,9 @@ image: nicolas2003/property_valuation_staging
 
 proxy:
   host: houses-staging.kmaster.app
+
+# Own database and user, so staging can't read or change production's accounts.
+env:
+  clear:
+    PGDATABASE: property_valuation_staging
+    PGUSER: property_valuation_staging

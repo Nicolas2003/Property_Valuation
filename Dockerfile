@@ -19,7 +19,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY estimator/ estimator/
 COPY data/ data/
-COPY app.py ./
+COPY migrations/ migrations/
+COPY app.py db.py users.py ./
 
 USER streamlit
 
@@ -30,4 +31,5 @@ ARG GIT_COMMITTED_AT=unknown
 ENV GIT_SHA=$GIT_SHA \
     GIT_COMMITTED_AT=$GIT_COMMITTED_AT
 
-CMD ["/app/.venv/bin/streamlit", "run", "app.py", "--server.address=0.0.0.0", "--server.port=8501"]
+# A failed migration exits before Streamlit starts, so the healthcheck fails and Kamal keeps the previous version.
+CMD ["sh", "-c", "/app/.venv/bin/python -m db && exec /app/.venv/bin/streamlit run app.py --server.address=0.0.0.0 --server.port=8501"]

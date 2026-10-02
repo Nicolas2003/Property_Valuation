@@ -34,18 +34,29 @@ pipeline {
       }
     }
 
+    // postgres:17's first-boot init server only listens on a socket, so wait for TCP before testing.
     stage('Tests') {
-      agent {
-        docker {
-          image 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
-          reuseNode true
-        }
-      }
       steps {
-        sh '''
-          uv sync --locked
-          uv run pytest -v --cov=estimator --cov=app --cov=scripts --cov-report=xml
-        '''
+        script {
+          docker.image('postgres:17').withRun('-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=property_valuation_test') { pg ->
+            try {
+              timeout(time: 2, unit: 'MINUTES') {
+                sh "until docker exec ${pg.id} pg_isready -h localhost -U postgres; do sleep 1; done"
+              }
+            } catch (err) {
+              sh "docker logs ${pg.id} || true"
+              throw err
+            }
+            docker.image('ghcr.io/astral-sh/uv:python3.13-bookworm-slim').inside(
+              "--link ${pg.id}:postgres -e PGHOST=postgres -e PGUSER=postgres -e PGPASSWORD=postgres"
+            ) {
+              sh '''
+                uv sync --locked
+                uv run pytest -v --cov=estimator --cov=app --cov=db --cov=users --cov=scripts --cov-report=xml
+              '''
+            }
+          }
+        }
       }
     }
 
@@ -96,7 +107,8 @@ pipeline {
         sshagent(credentials: ['droplet-ssh']) {
           withCredentials([usernamePassword(credentialsId: 'ghcr-token',
                                             usernameVariable: 'KAMAL_REGISTRY_USERNAME',
-                                            passwordVariable: 'KAMAL_REGISTRY_PASSWORD')]) {
+                                            passwordVariable: 'KAMAL_REGISTRY_PASSWORD'),
+                           string(credentialsId: 'property-valuation-staging-db-password', variable: 'PROPERTY_VALUATION_STAGING_DB_PASSWORD')]) {
             sh 'kamal deploy -d staging --skip-push --version "$GIT_COMMIT"'
           }
         }
@@ -116,7 +128,8 @@ pipeline {
         sshagent(credentials: ['droplet-ssh']) {
           withCredentials([usernamePassword(credentialsId: 'ghcr-token',
                                             usernameVariable: 'KAMAL_REGISTRY_USERNAME',
-                                            passwordVariable: 'KAMAL_REGISTRY_PASSWORD')]) {
+                                            passwordVariable: 'KAMAL_REGISTRY_PASSWORD'),
+                           string(credentialsId: 'property-valuation-db-password', variable: 'PROPERTY_VALUATION_DB_PASSWORD')]) {
             sh 'kamal deploy --skip-push --version "$GIT_COMMIT"'
           }
         }
