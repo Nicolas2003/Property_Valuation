@@ -28,7 +28,7 @@ pipeline {
     stage('Code Quality Check') {
       agent {
         docker {
-          image 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
+          image 'ghcr.io/astral-sh/uv:python3.14-trixie-slim'
           reuseNode true
         }
       }
@@ -53,7 +53,7 @@ pipeline {
               sh "docker logs ${pg.id} || true"
               throw err
             }
-            docker.image('ghcr.io/astral-sh/uv:python3.13-bookworm-slim').inside(
+            docker.image('ghcr.io/astral-sh/uv:python3.14-trixie-slim').inside(
               "--link ${pg.id}:postgres -e PGHOST=postgres -e PGUSER=postgres -e PGPASSWORD=postgres"
             ) {
               sh '''
@@ -150,7 +150,7 @@ pipeline {
       }
       agent {
         docker {
-          image 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
+          image 'ghcr.io/astral-sh/uv:python3.14-trixie-slim'
           reuseNode true
         }
       }
