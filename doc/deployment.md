@@ -9,8 +9,8 @@ The app is deployed with [Kamal](https://kamal-deploy.org) to a DigitalOcean dro
 |---|---|
 | Server | DigitalOcean droplet `209.38.93.10` (1 vCPU, 2 GB RAM, 2 GB swap; SSH as `root`) |
 | URL | `https://houses.kmaster.app` |
-| Kamal service | `house-price-estimator` |
-| Image | `ghcr.io/rpazevedo/house-price-estimator` (private GHCR package) |
+| Kamal service | `property_valuation` |
+| Image | `ghcr.io/<owner>/property_valuation` (private GHCR package; `<owner>` is set by `image:` in `config/deploy.yml`) |
 | Container port | `8501` (Streamlit) |
 | Healthcheck | `GET /_stcore/health` → `ok` |
 | Database | `property_valuation`, user `property_valuation` (staging: `property_valuation_staging`, user `property_valuation_staging`), on the DigitalOcean Managed PostgreSQL cluster |
@@ -26,7 +26,7 @@ container by its `Host` header, and obtains a separate Let's Encrypt certificate
 
 ```
                                ┌─────────────── droplet 209.38.93.10 ──────────────┐
-https://houses.kmaster.app ────┤                    ┌─► house-price-estimator (:8501)
+https://houses.kmaster.app ────┤                    ┌─► property_valuation (:8501)  │
                                │  kamal-proxy ──────┤                               │
 https://<other host> ──────────┤  (:80 / :443)      └─► other apps' containers      │
                                └───────────────────────────────────────────────────┘
@@ -95,8 +95,11 @@ Key settings in `config/deploy.yml`:
   kamal-proxy only switches traffic to a new container after this returns 200.
 - **`registry.server: ghcr.io`**: images are pushed to a private package on GitHub Container
   Registry. Kamal runs `docker login ghcr.io` on your machine (to push) and on the server (to
-  pull) with `username: rpazevedo` and `KAMAL_REGISTRY_PASSWORD`. The Dockerfile's
-  `org.opencontainers.image.source` label links the package to the GitHub repo.
+  pull) with `registry.username` and `KAMAL_REGISTRY_PASSWORD`. Only the token is secret: the
+  username and the image owner are set in `config/deploy.yml` and `config/deploy.staging.yml`,
+  and the Jenkinsfile reads the image names from `kamal config`, so changing the owner only
+  touches those two files. The Dockerfile's `org.opencontainers.image.source` label links the
+  package to the GitHub repo.
 - **`builder.arch: amd64`**: the droplet is x86_64, so the image is built for amd64 even on
   Apple Silicon.
 - **`env.clear.PG*` and `env.secret: PGPASSWORD`**: the standard libpq variables, which psycopg
@@ -128,10 +131,12 @@ Key lines in the `Dockerfile`:
 
 ## One-time setup: GHCR
 
-There's nothing to set up on GHCR itself. The package `ghcr.io/rpazevedo/house-price-estimator`
-is created on the first push. You only need a token:
+There's nothing to set up on GHCR itself. The packages `ghcr.io/<owner>/property_valuation` and
+`ghcr.io/<owner>/property_valuation_staging` are created on the first push, under the owner named
+in `config/deploy.yml` and `config/deploy.staging.yml`. You only need a token:
 
-1. On GitHub, go to **Settings → Developer settings → Personal access tokens → Tokens (classic)**.
+1. On GitHub, signed in as the owner, go to **Settings → Developer settings → Personal access
+   tokens → Tokens (classic)**.
 2. Generate a token with the **`write:packages`** scope (it includes `read:packages`). Use a
    classic token: GHCR doesn't accept fine-grained tokens. Set an expiry.
 3. Put it in your environment as `KAMAL_REGISTRY_PASSWORD` (see [Prerequisites](#prerequisites)).
@@ -139,7 +144,8 @@ is created on the first push. You only need a token:
 After the first deploy:
 
 - **Visibility:** packages under a personal account start out private. Confirm under your profile
-  → **Packages → house-price-estimator → Package settings**.
+  → **Packages → property_valuation → Package settings**, and the same for
+  `property_valuation_staging`.
 - **Storage:** private packages use your account's Packages storage allowance, and every deploy
   adds a tag. Delete old versions from the package settings now and then.
 
@@ -221,8 +227,8 @@ is closed or refreshed.
 
 ```sh
 # 1. Check the image builds and serves locally, against your local PostgreSQL
-docker build --platform linux/amd64 -t house-price-estimator .
-docker run --rm -p 8501:8501 -e PGHOST=host.docker.internal -e PGUSER=$USER house-price-estimator
+docker build --platform linux/amd64 -t property_valuation .
+docker run --rm -p 8501:8501 -e PGHOST=host.docker.internal -e PGUSER=$USER property_valuation
 curl localhost:8501/_stcore/health          # → ok  (then Ctrl-C the container)
 
 # 2. Check the Kamal config parses

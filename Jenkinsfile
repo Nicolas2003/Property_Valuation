@@ -1,3 +1,12 @@
+// Only the token is secret: the registry username and image owner are set in config/deploy*.yml.
+def withGhcrToken(List credentials, Closure body) {
+  withCredentials([usernamePassword(credentialsId: 'ghcr-token',
+                                    usernameVariable: 'GHCR_TOKEN_USERNAME',
+                                    passwordVariable: 'KAMAL_REGISTRY_PASSWORD')] + credentials) {
+    body()
+  }
+}
+
 pipeline {
   agent any
 
@@ -68,19 +77,20 @@ pipeline {
     stage('Build and push image') {
       when { branch 'main' }
       steps {
-        withCredentials([usernamePassword(credentialsId: 'ghcr-token',
-                                          usernameVariable: 'KAMAL_REGISTRY_USERNAME',
-                                          passwordVariable: 'KAMAL_REGISTRY_PASSWORD')]) {
+        withGhcrToken([]) {
           sh '''
-            echo "$KAMAL_REGISTRY_PASSWORD" | docker login ghcr.io -u "$KAMAL_REGISTRY_USERNAME" --password-stdin
+            kamal registry login --skip-remote
             docker buildx build --builder default --platform linux/amd64 --load \
               --build-arg GIT_SHA="$GIT_COMMIT" \
               --build-arg GIT_COMMITTED_AT="$(git log -1 --format=%cI)" \
               -t "property_valuation:$GIT_COMMIT" .
-            for svc in property_valuation property_valuation_staging; do
+            for dest in "" "-d staging"; do
+              config=$(kamal config $dest --version "$GIT_COMMIT")
+              image=$(echo "$config" | awk '/^:absolute_image:/ {print $2}')
+              svc=$(echo "$config" | awk '/^:service_with_version:/ {print $2}')
               echo "FROM property_valuation:$GIT_COMMIT" |
                 docker buildx build --builder default --platform linux/amd64 --push \
-                  --label service=$svc -t "ghcr.io/nicolas2003/$svc:$GIT_COMMIT" -
+                  --label service="${svc%-$GIT_COMMIT}" -t "$image" -
             done
           '''
         }
@@ -89,8 +99,9 @@ pipeline {
         always {
           sh '''
             docker image rm "property_valuation:$GIT_COMMIT" \
-              "ghcr.io/nicolas2003/property_valuation:$GIT_COMMIT" \
-              "ghcr.io/nicolas2003/property_valuation_staging:$GIT_COMMIT" || true
+              $(for dest in "" "-d staging"; do
+                  kamal config $dest --version "$GIT_COMMIT" | awk '/^:absolute_image:/ {print $2}'
+                done) || true
           '''
         }
       }
@@ -100,10 +111,7 @@ pipeline {
       when { branch 'main' }
       steps {
         sshagent(credentials: ['droplet-ssh']) {
-          withCredentials([usernamePassword(credentialsId: 'ghcr-token',
-                                            usernameVariable: 'KAMAL_REGISTRY_USERNAME',
-                                            passwordVariable: 'KAMAL_REGISTRY_PASSWORD'),
-                           string(credentialsId: 'property-valuation-staging-db-password', variable: 'PROPERTY_VALUATION_STAGING_DB_PASSWORD')]) {
+          withGhcrToken([string(credentialsId: 'property-valuation-staging-db-password', variable: 'PROPERTY_VALUATION_STAGING_DB_PASSWORD')]) {
             sh 'kamal deploy -d staging --skip-push --version "$GIT_COMMIT"'
           }
         }
@@ -121,10 +129,7 @@ pipeline {
       when { branch 'main' }
       steps {
         sshagent(credentials: ['droplet-ssh']) {
-          withCredentials([usernamePassword(credentialsId: 'ghcr-token',
-                                            usernameVariable: 'KAMAL_REGISTRY_USERNAME',
-                                            passwordVariable: 'KAMAL_REGISTRY_PASSWORD'),
-                           string(credentialsId: 'property-valuation-db-password', variable: 'PROPERTY_VALUATION_DB_PASSWORD')]) {
+          withGhcrToken([string(credentialsId: 'property-valuation-db-password', variable: 'PROPERTY_VALUATION_DB_PASSWORD')]) {
             sh 'kamal deploy --skip-push --version "$GIT_COMMIT"'
           }
         }
