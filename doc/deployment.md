@@ -104,6 +104,12 @@ Key settings in `config/deploy.yml`:
   Apple Silicon.
 - **`env.clear.PG*` and `env.secret: PGPASSWORD`**: the standard libpq variables, which psycopg
   reads directly. `PGSSLMODE: require` because DigitalOcean only accepts TLS connections.
+- **`env.clear.APP_ENV` and `DEPLOYED_AT`**: shown in the app's footer with the commit.
+  `APP_ENV` is `production` here, `staging` in `config/deploy.staging.yml` (`dev` when run
+  locally). The file is ERB, so `DEPLOYED_AT` (UTC) is set when Kamal loads the config, and is
+  rewritten by every `kamal deploy`, `kamal rollback` and `kamal app boot`. The commit SHA and
+  date are build args baked into the image, so a rollback shows the right commit. The app shows
+  both times in Melbourne time.
 
 Key lines in the `Dockerfile`:
 
@@ -322,6 +328,8 @@ After each deploy:
       Streamlit websocket works through kamal-proxy.
 - [ ] The other hosts on the droplet still respond.
 - [ ] `kamal app details` shows the container running.
+- [ ] The footers start with `staging` and `production` and show the same commit and fresh deploy
+      times.
 
 ## Troubleshooting
 

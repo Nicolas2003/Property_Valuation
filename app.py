@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import os
+from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import streamlit as st
 
@@ -20,6 +23,9 @@ from estimator.features import (
 from estimator.lookups import fill, known_suburbs
 from estimator.methods import ESTIMATORS
 from estimator.validation import parse_all
+
+REPO_URL = "https://github.com/Nicolas2003/Property_Valuation"
+TIMEZONE = ZoneInfo("Australia/Melbourne")
 
 LEADING = ["SUBURB", "PROPERTY_TYPE"]
 
@@ -149,6 +155,23 @@ def collect() -> dict[str, Any]:
     return raw
 
 
+def local_time(value: str) -> str:
+    try:
+        return datetime.fromisoformat(value).astimezone(TIMEZONE).isoformat()
+    except ValueError:
+        return value
+
+
+def footer() -> None:
+    st.divider()
+    env = os.environ.get("APP_ENV", "dev")
+    sha = os.environ.get("GIT_SHA", "dev")
+    commit = f"[`{sha[:7]}`]({REPO_URL}/commit/{sha})" if sha not in ("dev", "unknown") else f"`{sha}`"
+    committed = local_time(os.environ.get("GIT_COMMITTED_AT", "n/a"))
+    deployed = local_time(os.environ.get("DEPLOYED_AT", "n/a"))
+    st.caption(f"`{env}` · Commit {commit} · committed {committed} · deployed {deployed}")
+
+
 def log_in_form() -> None:
     with st.form("log_in"):
         username = st.text_input("Username", key="log_in_username")
@@ -189,6 +212,7 @@ if "username" not in st.session_state:
         log_in_form()
     with sign_up_tab:
         sign_up_form()
+    footer()
     st.stop()
 
 st.caption(f"{len(FEATURE_NAMES)} property, location and market features: {len(ESTIMATORS)} independent estimates.")
@@ -273,6 +297,7 @@ if submitted:
         st.warning(str(warning))
 
     if not report.ok:
+        footer()
         st.stop()
 
     st.subheader("Estimates")
@@ -307,3 +332,5 @@ if submitted:
         if priced:
             error_pct = (sum(priced) / len(priced) - actual) / actual * 100
             right.metric("Mean estimate", f"${sum(priced) / len(priced):,.0f}", f"{error_pct:+.1f}%")
+
+footer()
