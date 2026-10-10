@@ -9,5 +9,6 @@ proxy:
 # Own database and user, so staging can't read or change production's accounts.
 env:
   clear:
+    APP_ENV: staging
     PGDATABASE: property_valuation_staging
     PGUSER: property_valuation_staging

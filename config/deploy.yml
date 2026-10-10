@@ -22,8 +22,11 @@ registry:
 builder:
   arch: amd64
 
+# DEPLOYED_AT is refreshed on every deploy, rollback and boot.
 env:
   clear:
+    APP_ENV: production
+    DEPLOYED_AT: "<%= Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ") %>"
     PGHOST: db-postgresql-syd1-66096-do-user-7536526-0.h.db.ondigitalocean.com
     PGPORT: 25060
     PGDATABASE: property_valuation

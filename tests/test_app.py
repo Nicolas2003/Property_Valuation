@@ -182,3 +182,63 @@ def test_estimate_shows_one_metric_per_method_and_actual_price(app):
     assert "Mean estimate" in labels
     actual = next(metric for metric in app.metric if metric.label == "Actual sale price (from CSV)")
     assert actual.value == "$1,450,000"
+
+
+SHA = "0123456789abcdef0123456789abcdef01234567"
+
+
+@pytest.fixture
+def build_info(monkeypatch):
+    for name in ("APP_ENV", "GIT_SHA", "GIT_COMMITTED_AT", "DEPLOYED_AT"):
+        monkeypatch.delenv(name, raising=False)
+    return monkeypatch
+
+
+def footer(at: AppTest) -> str:
+    return at.main.caption[-1].value
+
+
+def test_footer_without_build_info(build_info):
+    assert footer(run_app()) == "`dev` · Commit `dev` · committed n/a · deployed n/a"
+
+
+def test_footer_shows_when_logged_in(build_info):
+    assert footer(run_app(username="ada")).startswith("`dev` · Commit ")
+
+
+def test_footer_shows_the_environment(build_info):
+    build_info.setenv("APP_ENV", "staging")
+
+    assert footer(run_app()).startswith("`staging` · Commit ")
+
+
+def test_footer_links_the_commit(build_info):
+    build_info.setenv("GIT_SHA", SHA)
+
+    assert f"Commit [`0123456`](https://github.com/Nicolas2003/Property_Valuation/commit/{SHA})" in footer(run_app())
+
+
+def test_footer_does_not_link_an_unknown_commit(build_info):
+    build_info.setenv("GIT_SHA", "unknown")
+
+    assert "Commit `unknown` ·" in footer(run_app())
+
+
+@pytest.mark.parametrize(
+    ("utc", "melbourne"),
+    [
+        ("2026-01-15T00:00:00Z", "2026-01-15T11:00:00+11:00"),
+        ("2026-07-15T00:00:00Z", "2026-07-15T10:00:00+10:00"),
+    ],
+)
+def test_footer_times_are_in_melbourne_time(build_info, utc, melbourne):
+    build_info.setenv("GIT_COMMITTED_AT", utc)
+    build_info.setenv("DEPLOYED_AT", utc)
+
+    assert footer(run_app()).endswith(f"committed {melbourne} · deployed {melbourne}")
+
+
+def test_footer_passes_non_timestamps_through(build_info):
+    build_info.setenv("GIT_COMMITTED_AT", "unknown")
+
+    assert "committed unknown ·" in footer(run_app())
