@@ -54,7 +54,7 @@ def estimate(at):
 
 def test_logged_out_shows_only_the_log_in_form(logged_out):
     assert not logged_out.exception
-    assert logged_out.title[0].value == "House price estimator"
+    assert logged_out.title[0].value == "Property Valuation"
     assert [tab.label for tab in logged_out.tabs] == ["Log in", "Sign up"]
     assert not logged_out.selectbox
 
@@ -110,7 +110,7 @@ def test_log_out(app):
 
 def test_app_renders_the_form(app):
     assert not app.exception
-    assert app.title[0].value == "House price estimator"
+    assert app.title[0].value == "Property Valuation"
     assert f"{len(ESTIMATORS)} independent estimates" in app.caption[0].value
     assert app.selectbox(key="f_SUBURB").value == "-"
     assert app.selectbox(key="f_PROPERTY_TYPE").value == "-"

@@ -38,7 +38,7 @@ PLACEHOLDERS = {
     "number_list": "520000;420500",
 }
 
-st.set_page_config(page_title="House price estimator", layout="wide")
+st.set_page_config(page_title="Property Valuation", layout="wide")
 
 
 def key(name: str) -> str:
@@ -203,7 +203,7 @@ def sign_up_form() -> None:
             st.rerun()
 
 
-st.title("House price estimator")
+st.title("Property Valuation")
 
 # The login lasts as long as the browser tab's session.
 if "username" not in st.session_state:
